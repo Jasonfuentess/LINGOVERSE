@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "LingoVerse",
+    "slug": "lingoverse",
+    "scheme": "lingoverse",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router", "expo-sqlite"],
+    "web": { "bundler": "metro", "output": "single", "lang": "es" }
+  }
+}

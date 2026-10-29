@@ -1,0 +1,43 @@
+{
+  "name": "lingoverse",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "diagnose:npm": "node scripts/diagnose-npm.mjs",
+    "start": "node node_modules/expo/bin/cli start",
+    "web": "node node_modules/expo/bin/cli start --web",
+    "android": "node node_modules/expo/bin/cli start --android",
+    "ios": "node node_modules/expo/bin/cli start --ios",
+    "typecheck": "tsc --noEmit",
+    "typecheck:core": "tsc -p tsconfig.core.json --noEmit",
+    "lint": "eslint .",
+    "test": "node scripts/test.mjs",
+    "test:web": "node scripts/check-web.mjs",
+    "check:expo": "node node_modules/expo/bin/cli install --check",
+    "check:doctor": "npm exec --yes -- expo-doctor",
+    "export:web": "node node_modules/expo/bin/cli export --platform web"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~57.0.17",
+    "expo": "~57.0.31",
+    "expo-constants": "~57.0.22",
+    "expo-linking": "~57.0.13",
+    "expo-router": "~57.0.29",
+    "expo-sqlite": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "eslint": "^9.22.0",
+    "eslint-config-expo": "~57.0.2",
+    "typescript": "~6.0.3"
+  }
+}

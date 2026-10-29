@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+.test-build/
+.npm-cache/
+.web-check/
+*.log
+.env*
+!.env.example
