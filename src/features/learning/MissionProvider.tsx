@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { cafeLesson } from '../../content/cafe';
-import { beginMission, continueMission, submitAnswer } from '../../domain/learning/engine';
+import { cafeLesson, cafeLessonV1, cafeLessonForProgress } from '../../content/cafe';
+import { continueMission, submitAnswer } from '../../domain/learning/engine';
 import type { LearnerAnswer, MissionProgress } from '../../domain/learning/models';
 import { MissionConflictError, MissionRepository } from '../../storage/missionRepository';
 import { deviceStorage } from '../../storage/deviceStorage';
 
-const repository = new MissionRepository(deviceStorage, cafeLesson);
+const repository = new MissionRepository(deviceStorage, cafeLesson, [cafeLessonV1]);
 interface MissionState {
   progress: MissionProgress | null;
   loading: boolean;
@@ -48,14 +48,13 @@ export function MissionProvider({ children }: PropsWithChildren) {
     setLoading(true);
     void read();
   };
-  const persist = async (change: () => MissionProgress) => {
+  const persist = async (action: () => Promise<MissionProgress>) => {
     if (busy.current || loading) return false;
     busy.current = true;
     setSaving(true);
     setSaveError(null);
     try {
-      const next = change();
-      await repository.save(next);
+      const next = await action();
       setProgress(next);
       setLoadError(null);
       return true;
@@ -66,14 +65,19 @@ export function MissionProvider({ children }: PropsWithChildren) {
     }
     finally { busy.current = false; setSaving(false); }
   };
-  const start = () => persist(() => beginMission(cafeLesson, (progress?.run ?? -1) + 1));
-  const answer = (value: LearnerAnswer) => persist(() => {
-    if (!progress || loadError) throw Error('No hay una aventura cargada');
-    return submitAnswer(cafeLesson, progress, value);
+  const persistChange = (change: () => MissionProgress) => persist(async () => {
+    const next = change();
+    await repository.save(next);
+    return next;
   });
-  const advance = () => persist(() => {
+  const start = () => persist(() => repository.start());
+  const answer = (value: LearnerAnswer) => persistChange(() => {
     if (!progress || loadError) throw Error('No hay una aventura cargada');
-    return continueMission(cafeLesson, progress);
+    return submitAnswer(cafeLessonForProgress(progress), progress, value);
+  });
+  const advance = () => persistChange(() => {
+    if (!progress || loadError) throw Error('No hay una aventura cargada');
+    return continueMission(cafeLessonForProgress(progress), progress);
   });
   return <Context.Provider value={{ progress, loading, saving, loadError, saveError, reload, start, answer, advance }}>{children}</Context.Provider>;
 }

@@ -25,7 +25,7 @@ export type Exercise = ChoiceExercise | TextExercise;
 export interface LessonVariant { id: string; title: string; start: string; exercises: Exercise[] }
 export interface Lesson {
   schemaVersion: 1;
-  version: 1;
+  version: number;
   id: string;
   title: string;
   language: 'fr';

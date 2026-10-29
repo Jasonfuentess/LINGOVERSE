@@ -1,0 +1,56 @@
+{
+  "seed": 903,
+  "sessions": 1000,
+  "contentVersion": 2,
+  "completedMissions": 1000,
+  "interactionsPerMission": 8,
+  "distribution": {
+    "matin-lucie": 164,
+    "midi-samir": 162,
+    "pluie-camille": 162,
+    "carnet-alex": 173,
+    "balade-noemie": 166,
+    "lecture-hugo": 173
+  },
+  "profileByVariant": {
+    "matin-lucie": "conversation-05eaa7d8",
+    "midi-samir": "conversation-4dc2a8f2",
+    "pluie-camille": "conversation-8cf93516",
+    "carnet-alex": "conversation-ae513dee",
+    "balade-noemie": "conversation-37eca273",
+    "lecture-hugo": "conversation-ecd4be27"
+  },
+  "profileDistribution": {
+    "conversation-8cf93516": 162,
+    "conversation-37eca273": 166,
+    "conversation-ecd4be27": 173,
+    "conversation-4dc2a8f2": 162,
+    "conversation-ae513dee": 173,
+    "conversation-05eaa7d8": 164
+  },
+  "uniqueVisibleFrenchQuestionSequences": 6,
+  "consecutiveProfileRepeats": 52,
+  "consecutiveVisibleFrenchQuestionRepeats": 52,
+  "sharedProfileControl": {
+    "sessions": 1000,
+    "ids": 6,
+    "profiles": 2,
+    "profileAwareRepeats": 291,
+    "idOnlyRepeats": 426
+  },
+  "consecutiveRepeats": 52,
+  "consecutiveRepeatRate": 0.05205205205205205,
+  "longestRunOfSameVariant": 2,
+  "uniformBaselineRepeats": 185,
+  "firstSessionWithAllVariantsUsed": 9,
+  "singleCandidateSessions": 1000,
+  "singleCandidateRepeats": 999,
+  "emptyLibraryDecision": "no-eligible-content",
+  "retained": {
+    "entries": 66,
+    "recent": 64,
+    "errorFacts": 1,
+    "detectedPriceErrors": 100
+  },
+  "storedCharacters": 22450
+}

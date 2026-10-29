@@ -73,7 +73,7 @@ try {
     throw Error(`Missing text: ${text}\n${await evaluate('document.body.innerText')}`);
   };
   const click = async (role, text) => {
-    const clicked = await evaluate(`(() => { const item = [...document.querySelectorAll('[role="${role}"]')].find(item => item.textContent.includes(${JSON.stringify(text)})); if (!item || item.getAttribute('aria-disabled') === 'true') return false; item.click(); return true; })()`);
+    const clicked = await evaluate(`(() => { const item = [...document.querySelectorAll('[role="${role}"]')].find(item => item.textContent.toLocaleLowerCase().includes(${JSON.stringify(text.toLocaleLowerCase())})); if (!item || item.getAttribute('aria-disabled') === 'true') return false; item.click(); return true; })()`);
     assert.equal(clicked, true, `Clickable ${role}: ${text}`);
     await sleep(100);
   };
@@ -126,15 +126,18 @@ try {
   await reload(); await waitFor('Vamos por partes');
   await radio('Bonjour !'); await correct();
   await waitFor('Tu primera decisión');
-  await radio('Je voudrais un thé'); await correct();
+  await radio('thé, s’il vous plaît.'); await correct();
   await waitFor('Tu té ya está pedido');
   await radio('À emporter'); await correct();
   await waitFor('Preparan un vaso');
-  await radio('Non, merci'); await correct();
+  const withWithout = await evaluate(`!![...document.querySelectorAll('[role="radio"]')].find(item => item.textContent.includes('Sans sucre, merci.'))`);
+  await radio(withWithout ? 'Sans sucre, merci.' : 'Non, merci'); await correct();
   await waitFor('Preguntá el precio');
   await fill("C'est combien ?"); await correct();
   await waitFor('Entendé la respuesta');
-  await radio('Trois euros'); await correct();
+  const savedProgress = await evaluate(`JSON.parse(localStorage.getItem('lingoverse.mission.fr-a1-paris-cafe.v1')).progress`);
+  const amounts = { 'matin-lucie': 'Trois euros', 'midi-samir': 'Deux euros', 'pluie-camille': 'Deux euros', 'carnet-alex': 'Un euro', 'balade-noemie': 'Trois euros', 'lecture-hugo': 'Trois euros' };
+  await radio(savedProgress.contentVersion === 1 ? 'Trois euros' : amounts[savedProgress.variantId]); await correct();
   await waitFor('Un pequeño agradecimiento');
   await fill('Merci beaucoup.'); await correct();
   await waitFor('Hasta la próxima');
@@ -144,14 +147,16 @@ try {
   await waitFor('Intentos incorrectos: 1');
   await reload(); await waitFor('8/8 pasos completados');
   await button('Reiniciar aventura'); await button('Conservar mi avance'); await waitFor('8/8 pasos completados');
-  await button('Reiniciar aventura'); await button('Confirmar reinicio'); await waitFor('Mediodía con Samir');
+  await button('Reiniciar aventura'); await button('Confirmar reinicio');
   await waitFor('0/8 pasos completados');
-  await reload(); await waitFor('Mediodía con Samir');
+  const selectedVariant = await evaluate(`JSON.parse(localStorage.getItem('lingoverse.mission.fr-a1-paris-cafe.v1')).progress.variantId`);
+  await reload(); await waitFor('0/8 pasos completados');
+  assert.equal(await evaluate(`JSON.parse(localStorage.getItem('lingoverse.mission.fr-a1-paris-cafe.v1')).progress.variantId`), selectedVariant);
   const screenshot = await command('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
   await writeFile(path.join(artifacts, 'mission-mobile.png'), Buffer.from(screenshot.data, 'base64'));
   await button('Volver a Explorar'); await button('Volver al inicio'); await waitFor('Tu idioma elegido sigue siendo inglés');
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser runtime errors');
-  console.log('PASS: onboarding/profile, English preference preserved, tea/takeaway/sugar branch, wrong feedback reload, eight steps, completion reload, cancel/restart, alternate variant, mobile screenshot.');
+  console.log('PASS: onboarding/profile, English preference preserved, tea/takeaway/sugar branch, wrong feedback reload, eight steps, completion reload, cancel/restart, persisted selected variant, mobile screenshot.');
 } catch (error) {
   console.error('Browser stderr:', browserError);
   throw error;

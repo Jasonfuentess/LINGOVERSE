@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { cafeLesson } = require('../.test-build/content/cafe.js');
+const { cafeLesson } = require('../.test-build/content/cafe.v1.js');
 const { validateLesson } = require('../.test-build/domain/learning/validation.js');
 const { beginMission, submitAnswer, continueMission, currentExercise, restoreProgress, evaluateAnswer } = require('../.test-build/domain/learning/engine.js');
 const { MissionRepository } = require('../.test-build/storage/missionRepository.js');
@@ -24,7 +24,7 @@ function memory() {
 test('content validates and variants teach the same eight objectives', () => {
   assert.equal(validateLesson(cafeLesson), cafeLesson);
   assert.equal(cafeLesson.objectives.length, 8);
-  assert.equal(cafeLesson.variants.length, 2);
+  assert.ok(cafeLesson.variants.length >= 2);
   for (const exercise of cafeLesson.variants[0].exercises) {
     const other = cafeLesson.variants[1].exercises.find(item => item.id === exercise.id);
     assert.equal(other.teaching, exercise.teaching);
@@ -87,13 +87,13 @@ test('restart alternates editorial variants and supports an injected selector', 
   const second = beginMission(cafeLesson, 1);
   assert.notEqual(first.variantId, second.variantId);
   assert.notEqual(currentExercise(cafeLesson, first).scene, currentExercise(cafeLesson, second).scene);
-  assert.equal(beginMission(cafeLesson, 2).variantId, first.variantId);
+  assert.equal(beginMission(cafeLesson, cafeLesson.variants.length).variantId, first.variantId);
   assert.equal(beginMission(cafeLesson, 1, () => cafeLesson.variants[0].id).variantId, first.variantId);
   assert.throws(() => beginMission(cafeLesson, 0, () => 'missing'));
 });
 test('content rejects broken references, duplicate IDs, cycles and routes missing objectives', () => {
   for (const mutate of [
-    lesson => { lesson.version = 2; },
+    lesson => { lesson.schemaVersion = 2; },
     lesson => { lesson.variants[0].exercises[0].choices[0].next = 'missing'; },
     lesson => { lesson.variants[0].exercises[1].id = 'bonjour'; },
     lesson => { lesson.variants[0].exercises[0].choices[0].next = 'bonjour'; },

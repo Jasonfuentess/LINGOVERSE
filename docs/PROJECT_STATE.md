@@ -1,6 +1,141 @@
 # Estado del proyecto
 
-Actualizado: 2026-10-28 (America/Denver). Alcance actual: LV-002. LV-003 no iniciada.
+Actualizado: 2026-10-28 (America/Denver). Alcance actual: LV-003B. LV-004 no iniciada.
+
+## LV-003B — ampliación de variedad conversacional
+
+### Resultado y alcance
+
+Se mantienen seis identidades y el grafo de ocho objetivos, con seis perfiles franceses v2 que cambian pedido, lugar, azúcar e importe formulado. Cada pareja difiere en cuatro intervenciones centrales en el recorrido equivalente documentado; las pruebas verifican al menos dos diferencias centrales para cada pareja en las ocho rutas de decisiones. Se mantienen café/té, sur place/à emporter y aceptar/rechazar azúcar. Las preguntas completas y todas las respuestas nuevas tienen traducción y ayuda antes de evaluar. Se sigue orientando a A1 comunicativo; no se afirma validación docente externa o percepción comprobada mediante estudio de usuarios.
+
+| Perfil | Diferencia central de conversación | Importe ficticio |
+| --- | --- | ---: |
+| Lucie | Qu’est-ce que vous prenez ?; pedido con Je voudrais; lugar abierto | 3 € |
+| Samir | Qu’est-ce que je vous sers ?; pedido breve y confirmación de tomar aquí | 2 € |
+| Camille | Vous voulez un café ou un thé ?; confirmar si se queda en el café | 2 € |
+| Alex | Un café ? Un thé ?; Je prends; Avec ou sans sucre y respuestas con/sin | 1 € |
+| Noémie | Vous voulez boire un café ou un thé ?; Ici ou à emporter y Du sucre ? | 3 € |
+| Hugo | Je vous prépare un café ou un thé ?; ofrecer mesa y Un peu de sucre ? | 3 € |
+
+Los ejemplos completos de las seis conversaciones, con las mismas decisiones y traducciones, están en `docs/LV-003B_CONVERSATIONS.md`. Se generan con `npm.cmd run document:conversations`. El paso de comprensión vuelve a mostrar el importe como ejercicio escrito, no como audio ni turno oral adicional ficticio.
+
+### Persistencia y compatibilidad
+
+Paquete anterior congelado en `src/content/cafe.v1.ts`, hash semántico SHA256 `2c2159ab58ddf12eb7a369c95a695754117d4b73e339e1c9280a66211fbd05f3`, comprobado por prueba. Paquete nuevo `cafe.v2.ts` con version 2 y mismos IDs de variante. `cafe.ts` resuelve por contentVersion. Solo se amplía el contrato/validador para versiones positivas: evaluación y transiciones no se reescriben. El proveedor, pantalla y repositorio usan el contenido guardado al continuar, e inician v2 al confirmar otro recorrido. El mismo run no puede cambiar de versión.
+
+Se prueban las seis variantes v1 en registros planos y envueltos, tanto feedback inicial como feedback de precio antiguo de tres euros; continúan exactamente en v1, incluida su calificación. Un reinicio posterior abre v2. No se escribe durante la lectura legacy. El historial sin profileId se enriquece en memoria sin sumar apariciones ni alterar sus bytes almacenados; el siguiente guardado conserva formato de envoltorio v2. Se mantienen claves/adaptadores, CAS/locks y preferencias. Los IDs de estadísticas nuevas incluyen versión; la memoria v1 no se atribuye a las nuevas conversaciones. Downgrade a un cliente antiguo no se promete.
+
+### Selector por conversación
+
+Nueva firma del grafo central francés (preguntas, opciones, respuestas, réplicas y ramas), excluyendo nombres, ambientación, traducciones españolas, IDs internos y saludos/despedidas. Huella técnica no criptográfica. profileId opcional compatible en candidatos/contexto de historial; se agrupa frecuencia/última sesión por perfil y ámbito/idioma/categoría, tomando la memoria más fuerte de ID/perfil sin doble penalización. Repasos y alternativas únicas siguen disponibles.
+
+La revisión independiente no detectó Critical/Important demostrados. Se corrigieron dos observaciones de calidad con regresiones RED→GREEN: enseñanza de precio heredada se ajustó al importe actual y la firma dejó de depender de traducciones españolas/IDs de nodos. Ordenación determinista independiente de la configuración regional. Revisión por lectura, no certificación pedagógica ni ejecución de plataforma.
+
+### Validaciones ejecutadas
+
+| Comando | Resultado real |
+| --- | --- |
+| `npm.cmd test` | 53/53 PASS (43 anteriores conservados como regresiones v1/genéricas y 10 pruebas de perfiles/versionado) |
+| `npm.cmd run typecheck:core` | PASS |
+| `npm.cmd run typecheck` | PASS |
+| `npm.cmd run lint` | PASS, sin advertencias |
+| `npm.cmd run export:web` | PASS, bundle local generado |
+| `npm.cmd run simulate:variety` | PASS, 1000 misiones completas; simulación completa repetida para exigir igualdad exacta |
+| `npm.cmd run document:conversations` | PASS, seis conversaciones completas y cuatro diferencias centrales mínimas en la ruta documentada |
+| `$env:EXPO_OFFLINE='1'; npm.cmd run check:expo` | PASS; advierte validación menos fiable en modo offline |
+| `npm.cmd run test:web` con Chromium local | FAIL durante arranque gráfico/CDP, GPU process exited / GPU process isn't usable y conexión WebSocket terminada antes de navegar. No se acredita prueba visual |
+
+Los tests nuevos se observaron en rojo antes de implementar. El cambio de contenido hizo fallar seis expectativas antiguas de ayudas/preguntas idénticas: esas pruebas se conservaron apuntando a v1, no se eliminaron ni se alteraron para aceptar silenciosamente nuevos textos. La prueba de esquema desconocido comprueba schemaVersion 2; contentVersion 2 ahora es legítima. V2 tiene pruebas propias de las 48 rutas y apoyo/importe/coherencia. No se instalaron dependencias.
+
+Simulación semilla 903, informe en `docs/LV-003B_SIMULATION.json`: 1000 misiones, ocho objetivos por misión, seis secuencias francesas visibles y seis huellas. Distribución Lucie 164, Samir 162, Camille 162, Alex 173, Noémie 166, Hugo 173. Repeticiones consecutivas: ID 52, perfil 52, preguntas visibles 52; racha máxima 2; referencia uniforme 185. Todos los perfiles usados hasta sesión 9. Control adicional con seis IDs que comparten dos conversaciones: ponderación por perfil 291 repeticiones frente a 426 solo por ID. Un solo candidato sigue completando 1000 selecciones con 999 repeticiones. Historial final 66 entradas/64 recientes/un hecho con 100 errores realmente evaluados; registro 22450 caracteres. Datos simulados, no usuarios ni aprendizaje medido, y no una garantía para toda semilla.
+
+### Archivos y pendientes
+
+Nuevos: `src/content/cafe.v1.ts`, `src/content/cafe.v2.ts`, `src/domain/learning/conversation.ts`, `tests/conversation-profiles.test.cjs`, `scripts/document-conversations.mjs`, `tasks/LV-003B.md`, `docs/LV-003B_PLAN.md`, `docs/LV-003B_CONVERSATIONS.md`, `docs/LV-003B_SIMULATION.json`.
+
+Modificados en esta tarea: `src/content/cafe.ts`, `src/domain/learning/models.ts`, `validation.ts`, `variety.ts`; `src/domain/variety/models.ts`, `history.ts`, `selection.ts`; `src/storage/missionRepository.ts`; proveedor/pantalla de misión; tres suites anteriores para usar contenido congelado; simulador y prueba web; package.json (solo script documental); README y documentación de arquitectura/contenido/motores/estado. Los cambios de LV-003/auditoría ya pendientes se preservaron.
+
+Rama comprobada feature/lv-003-variety-engine. Solo Git de lectura; sin cambios de rama, staging, commit, merge, push o permisos, sin deploy y sin LV-004. package-lock.json y dependencias intactos. Logs locales `lv003b-*.log`, build/artefactos de navegador ignorados.
+
+Para comprobar manualmente: abrir Inicio/Explorar → aventura; si existe recorrido antiguo, primero verificar que continúa igual y después confirmar Reiniciar para v2. Comparar pedido/lugar/azúcar/importe, probar todas las decisiones y las respuestas admitidas por la ayuda. Recargar en feedback y comprobar versión/variante/importe inalterados. Probar errores/cuota/dos pestañas, accesibilidad y móviles reales. La evidencia textual y las pruebas demuestran diferencias sustanciales de contenido; la aceptación visual, Safari, Android/iOS y revisión docente externa siguen pendientes.
+
+## Historial anterior de LV-003
+
+## Auditoría posterior LV-003 — preguntas repetidas
+
+Solicitud: investigar dos pruebas del usuario con preguntas iguales. Rama verificada feature/lv-003-variety-engine. Los cambios sin confirmar de la implementación LV-003 ya existían y se preservaron; solo Git de lectura, sin cambios de rama, commit, merge, permisos o push.
+
+Hallazgo: integración funcional, variedad editorial limitada. Hay seis IDs/personajes pero solo dos perfiles franceses: A = Lucie/Alex/Hugo, B = Samir/Camille/Noémie. Las mismas decisiones producen exactamente las mismas preguntas dentro de cada perfil. Entre perfiles cambian cinco intervenciones de ocho (solo dos son preguntas: pedido y azúcar). Opciones, respuestas válidas, ayudas, correcciones, réplicas, precio y objetivos son iguales en todos. Nombres y escenas en español sí cambian y llegan al objeto Exercise mostrado. El informe previo sobre seis variantes no demostraba seis conversaciones diferentes.
+
+Se confirmó por lectura la cadena Comenzar/Confirmar reinicio → provider.start → repository.start → selectContent con historia → variante por ID → currentExercise → ExerciseView. Una misión completada solo sortea de nuevo al confirmar reinicio; abrir resultado no lo hace. Una interrumpida conserva variante/estado al cargar. Prueba con RNG fijo 0.1 y persistencia: primero Lucie, tras completar/cargar historial Samir, con pregunta distinta recibida por la interfaz. Prueba Alex→Hugo reproduce todos los prompts iguales con dos IDs diferentes; no es fallo de lookup/UI. No se conoce el historial real del navegador del usuario para identificar sus dos variantes.
+
+En el estado específico después de un primer recorrido y partiendo de memoria vacía, los pesos permiten aproximadamente 3.41% de repetir ID y 42.05% de repetir el perfil de preguntas bajo un sorteo uniforme. El selector actual penaliza IDs, no familias de conversaciones equivalentes. No se cambió esa lógica porque funciona como fue diseñada; se documenta el límite y se proponen mejoras futuras, sin implementarlas.
+
+Cambio de esta auditoría: nuevo `tests/variety-visible-content.test.cjs` con siete pruebas selector→repositorio→Exercise que consume la pantalla; nuevo `docs/LV-003_VISIBLE_VARIETY_AUDIT.md` con matriz exacta de textos y propuestas; actualización de este estado y enlace en VARIETY_ENGINE.md. Sin cambios de producción, contenido ni dependencias. Baseline 36/36; suite ampliada 43/43. Las pruebas no montan componentes ni un navegador: no equivalen a aceptación visual. La comprobación visual de plataforma sigue pendiente.
+
+Resultados: `npm.cmd test` 43/43 PASS; `npm.cmd run typecheck:core`, `npm.cmd run typecheck`, `npm.cmd run lint` y `npm.cmd run export:web` comprobados en esta auditoría. Logs locales ignorados `lv003-audit-*.log`. El inventario y las diferencias exactas, incluidas todas las introducciones, están en LV-003_VISIBLE_VARIETY_AUDIT.md.
+
+## LV-003 — Variety Engine implementado, revisión pendiente del usuario
+
+### Git y preservación
+
+El usuario preparó y actualizó main por fast-forward fuera de Codex y creó `feature/lv-003-variety-engine`. Al iniciar esta continuación se verificaron rama correcta, árbol limpio y HEAD `fc41286ecf3c96ebcb89be0cea10939a902a76ca`. Solo se ejecutó Git de lectura (status, branch --show-current, log, diff, diff --check), usando safe.directory por comando ante diferencia de propietario; sin cambios de configuración global. No fetch/switch/merge/add/commit/push ni cambios de permisos/ACL en esta continuación. No se modificaron dependencias ni package-lock.json. Los cambios quedan sin staging para revisión/commit manual del usuario.
+
+### Implementación
+
+- Variety Engine puro reutilizable en/fr: candidatos, contexto, CEFR, categoría, objetivos, prerrequisitos, región futura, consentimiento técnico, referencia opcional a error real, pesos, RNG sembrable y decisión explicable. Filtros duros antes del sorteo; frecuencia/recencia/relevancia/nivel ajustan pesos positivos, sin prohibir repasos.
+- Historia v1 acotada a 256 estadísticas LRU, 64 apariciones recientes y 64 hechos de error, con frecuencia, última sesión/fecha y contexto educativo mínimo. Contadores acotados; no se añade texto libre ni datos personales al historial Variety.
+- Adaptador Learning→Variety deriva apariciones de entrada en escenas y errores exclusivamente del replay/evaluación real. Reanudar no sortea ni agrega apariciones. No se deduce pronunciación, dominio léxico o errores desconocidos.
+- Repositorio conserva clave de misión y progreso v1 dentro de envoltorio v2 con history v1, en una sola escritura con CAS/locks. Lectura de progreso legacy reconstruye únicamente su recorrido observable, con fechas desconocidas null; no escribe ni cambia variante/escena/eventos/feedback al cargar. No inventa sesiones antiguas ni toca preferencias LV-001. Primer guardado persiste la migración.
+- UI usa selección ponderada al comenzar/reiniciar y restaura exactamente el estado al continuar. Se conserva confirmación de reinicio, ahora indicando que se guarda resumen agregado de variantes y errores mientras se reemplaza el recorrido.
+- Seis variantes editoriales, preservando intactas las dos originales. Nuevas: pluie-camille, carnet-alex, balade-noemie y lecture-hugo. Todas comparten ayudas, respuestas, ocho objetivos/calificación y ramas café/té, lugar y azúcar. Sin barajar pasos dependientes ni introducir vocabulario evaluado nuevo.
+- Preparados contratos para reacciones, entrenadores/errores contextuales y misiones profesionales. No implementados otros motores completos, IA generativa, voces, humor adulto ni LV-004.
+
+### Pruebas y simulación reales
+
+| Comando | Resultado |
+| --- | --- |
+| `npm.cmd test` | 36/36 PASS: 23 pruebas existentes + 13 nuevas de variedad/integración/validación |
+| `npm.cmd run typecheck:core` | PASS |
+| `npm.cmd run typecheck` | PASS |
+| `npm.cmd run lint` | PASS sin errores/advertencias en validación final; se corrigieron dos advertencias intermedias de import duplicado |
+| `npm.cmd run export:web` | PASS, bundle Metro generado localmente; sin publicación |
+| `npm.cmd run simulate:variety` | PASS; 1000 misiones completas + 1000 selecciones de candidato único, simulación repetida para exigir igualdad exacta con semilla 903 |
+| `$env:EXPO_OFFLINE='1'; npm.cmd run check:expo` | PASS: Dependencies are up to date; advertencia explícita de validación menos fiable offline |
+| `npm.cmd --cache .npm-cache --fetch-retries=0 --fetch-timeout=15000 run check:doctor` | 19/21, exit 1: esquema Expo requiere API (connect EACCES 34.110.201.56:443) y React Native Directory devuelve respuesta remota inesperada; Could not fetch bundled native modules. No se declaran aprobadas esas dos comprobaciones |
+| `npm.cmd run test:web` con Chromium local | FAIL antes de navegación: GPU process exited -1073741790, GPU process isn't usable y timeout Page.enable. No se obtuvo captura ni aceptación visual |
+| Git `diff --check` (solo lectura) | PASS; avisos informativos LF→CRLF de configuración existente, sin errores de whitespace |
+
+Las pruebas nuevas se observaron en rojo antes de implementar: módulo del motor ausente, integración/start/history aún inexistentes y dos pruebas de validación pública que fallaron antes de corregirlas. En revisión de código independiente no se identificaron Critical/Important demostrables; se corrigieron dos Minor mediante pruebas RED→GREEN: metadatos con etiquetas duplicadas/sin límite y fechas/identidades inválidas aceptadas temporalmente por funciones públicas.
+
+Cobertura nueva: relevancia contextual, pesos 1:3 con 1000 muestras sembradas, frecuencia/recencia, repetición con biblioteca única/agotada/vacía, en/fr, CEFR/prerrequisitos, región/consentimiento, hechos reales frente a errores no registrados, límites/serialización, migración sin escritura, reanudación estable, conservación de errores tras reiniciar, cuota/conflictos atómicos y 48 rutas educativas (6 variantes × 8 combinaciones), con ayudas/opciones/aceptación idénticas.
+
+Simulación de 1000 sesiones con semilla 903:
+
+| Variante | Selecciones |
+| --- | ---: |
+| matin-lucie | 164 |
+| midi-samir | 162 |
+| pluie-camille | 162 |
+| carnet-alex | 173 |
+| balade-noemie | 166 |
+| lecture-hugo | 173 |
+
+52 repeticiones consecutivas entre 999 transiciones (5.21%), frente a 185 (18.52%) en referencia uniforme controlada; racha máxima 2. Las seis variantes se usaron antes o en la sesión 9. Una biblioteca de un candidato completa 1000 selecciones con 999 repeticiones, sin bloquearse; vacía devuelve no-eligible-content. Las 1000 misiones completan ocho objetivos y se restauran cada 25 sesiones. Se detectan exactamente 100 errores introducidos en prix, agrupados en un hecho real. Historial retenido: 66 estadísticas, 64 eventos, un hecho; registro de 21844 caracteres. Se repite la simulación completa y se comparan resultados para reproducibilidad. Informe exacto: `docs/LV-003_SIMULATION.json`.
+
+Son datos de simulación, no usuarios ni aprendizaje medido. Las cifras son de esta semilla/biblioteca/política, no una garantía universal de distribución. El historial se poda y puede olvidar contenido antiguo; no representa frecuencia vitalicia. Hay seis variantes finitas, no contenido infinito. Las fechas legacy null no se presentan como fechas reales de apariciones.
+
+### Archivos y límites
+
+Nuevos: `src/domain/variety/models.ts`, `selection.ts`, `history.ts`; `src/domain/learning/variety.ts`; `tests/variety.test.cjs`, `tests/variety-integration.test.cjs`; `scripts/simulate-variety.mjs`; `tasks/LV-003.md`; `docs/LV-003_PLAN.md`, `docs/LV-003_SIMULATION.json`, `docs/VARIETY_ENGINE.md`.
+
+Modificados: `src/storage/missionRepository.ts`, `src/features/learning/MissionProvider.tsx`, `src/features/learning/MissionScreen.tsx`, `src/content/cafe.ts`, `tests/learning.test.cjs`, `scripts/check-web.mjs`, `package.json` (solo script simulate:variety), `README.md`, `docs/ARCHITECTURE.md`, `docs/LEARNING_ENGINE.md`, `docs/CONTENT_MODEL.md`, `docs/LV-002_MANUAL_TEST.md`, `docs/PROJECT_STATE.md`. No hay staging ni commit; no push/deploy. Artefactos locales ignorados: `lv003-*.log`, `.test-build/`, `.web-check/`, `dist/`.
+
+Limitaciones: aceptación visual heredada y nueva integración sin ejecución aprobada en navegador real; Android/iOS no ejecutados; dos verificaciones remotas pendientes; revisión docente externa pendiente. Sin Web Locks no se garantiza atomicidad entre pestañas que escriban simultáneamente. RNG sembrado no criptográfico, sin promesa de impredecibilidad; usa semilla de reloj/sesión en runtime. Historia por ámbito de misión; no hay agregador global entre misiones todavía. El formato actual lee LV-002, pero un cliente antiguo no entiende el envoltorio v2 ni los nuevos IDs: downgrade requiere gestionar backup/migración, no se promete compatibilidad inversa.
+
+Validación manual vigente en `docs/VARIETY_ENGINE.md`: iniciar/reiniciar varios recorridos, permitir repeticiones ocasionales, comprobar variante/estado idénticos al recargar, migración de registro legacy, error real retenido, cuota y conflicto entre pestañas. No es necesario cambiar idioma preferido. Comando de arranque: `npm.cmd run web` → Inicio/Explorar → aventura de París. Mensaje recomendado para commit manual: `feat: implementar Variety Engine antirrepetición`.
+
+## Historial anterior: LV-002
 
 ## LV-002 — implementación y evidencia actual
 

@@ -1,5 +1,7 @@
 # Prueba manual de LV-002
 
+Con LV-003, los pasos que esperan Lucie al iniciar o Samir al reiniciar ya no exigen esos personajes específicos: puede elegirse cualquiera de seis variantes y puede repetirse una. Anotar el personaje seleccionado y comprobar que se conserva al recargar. El dato de persistencia es ahora una envoltura v2 con progress e history, bajo la misma clave. Al reiniciar se conserva memoria agregada. Consultar VARIETY_ENGINE.md para migración, simulación y procedimiento vigente.
+
 Estado: este procedimiento NO acredita pruebas realizadas. El servidor y la exportación fueron comprobados, pero el navegador headless del entorno falló antes de cargar la app. Android/iOS no ejecutados.
 
 ## Arranque y comprobaciones

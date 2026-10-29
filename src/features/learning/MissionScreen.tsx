@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
 import { Button, Card, Copy, Heading, Loading, Notice, Page } from '../../components/ui';
-import { cafeLesson } from '../../content/cafe';
+import { cafeLessonForProgress } from '../../content/cafe';
 import { currentExercise } from '../../domain/learning/engine';
 import { usePreferences } from '../preferences/PreferencesProvider';
 import { ExerciseView } from './ExerciseView';
@@ -16,6 +16,7 @@ export function MissionScreen() {
   if (!preferences.preferences) return <Page><Notice message={preferences.error ?? 'No pudimos leer las preferencias.'} /><Button label="Volver al inicio" onPress={() => router.replace('/')} /></Page>;
   if (!preferences.preferences.onboardingCompleted) return <Redirect href="/onboarding" />;
   const progress = state.progress;
+  const cafeLesson = cafeLessonForProgress(progress);
   const variant = cafeLesson.variants.find(item => item.id === progress?.variantId);
   const errors = progress?.events.filter(event => event.type === 'answer').length ?? 0;
   const submittedAnswer = progress?.events.filter(event => event.type === 'answer').at(-1)?.answer;
@@ -33,7 +34,7 @@ export function MissionScreen() {
       <ExerciseView key={`${progress.run}:${progress.nodeId}`} exercise={currentExercise(cafeLesson, progress)} feedback={progress.feedback} submittedAnswer={submittedAnswer} saving={state.saving} error={state.saveError} onAnswer={state.answer} onContinue={state.advance} />
     </>}
     {(!progress || progress.status === 'completed' || state.loadError) && state.saveError && <Notice message={state.saveError} />}
-    {(progress || state.loadError) && (confirmRestart ? <Card><Heading>¿Empezar otro recorrido?</Heading><Copy>Se reemplazará el avance de esta aventura, incluidos sus errores. Tus preferencias se conservan. Si el registro actual está dañado, también será reemplazado.</Copy>
+    {(progress || state.loadError) && (confirmRestart ? <Card><Heading>¿Empezar otro recorrido?</Heading><Copy>Se reemplazará el recorrido actual. Se conserva un resumen local de variantes vistas y errores detectados para orientar la variedad, además de tus preferencias. Si el registro actual está dañado, será reemplazado.</Copy>
       <Button label={state.saving ? 'Guardando…' : 'Confirmar reinicio'} disabled={state.saving} onPress={() => { void state.start().then(saved => { if (saved) setConfirmRestart(false); }); }} />
       <Button label="Conservar mi avance" disabled={state.saving} onPress={() => setConfirmRestart(false)} />
     </Card> : <Button label="Reiniciar aventura" disabled={state.saving} onPress={() => setConfirmRestart(true)} />)}
