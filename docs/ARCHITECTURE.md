@@ -1,4 +1,20 @@
-# Arquitectura · LV-002
+# Arquitectura · LV-003B
+
+## Extensión LV-003B
+
+`cafe.ts` es el catálogo de contenido: versión anterior congelada en cafe.v1.ts y actual en cafe.v2.ts, con mismos IDs de variantes pero distintos contentVersion. Repositorio/proveedor/pantalla resuelven esa versión al continuar; iniciar otro recorrido usa siempre la actual. El Learning Engine solo amplía el contrato/validación de versión; sus reglas de evaluación/transición no cambian.
+
+`learning/conversation.ts` calcula la firma del grafo central francés normalizado sin nombres/traducciones/IDs y la huella de perfil. El adaptador learning/variety adjunta profileId e IDs de estadísticas con versión. El motor genérico agrega memoria por perfil/ámbito/idioma/categoría; la estructura de historial v1 admite el campo opcional y se enriquece en memoria para datos anteriores. Persistencia atómica y control de conflictos conservados.
+
+Las regresiones v1 se mantienen y v2 comprueba 48 rutas, diferencias centrales por pareja, importes consistentes y reanudación sin actualizar contenido a mitad del run. Fuentes, seis diálogos completos y métricas en LV-003B_CONVERSATIONS, LV-003B_SIMULATION y PROJECT_STATE.
+
+## Extensión LV-003
+
+Variety Engine puro en `src/domain/variety/`: filtros pedagógicos en/fr, pesos de relevancia/frecuencia/recencia/nivel, RNG inyectable e historial acotado. No conoce cafeterías ni UI. El adaptador `src/domain/learning/variety.ts` convierte lecciones en candidatos, extrae entradas de escena y hechos de error mediante replay del Learning Engine.
+
+`MissionRepository` selecciona al iniciar; al reanudar solo restaura. Guarda progreso v1 e historial v1 en una envoltura v2 atómica bajo la clave original de misión; importa progreso plano de LV-002 en memoria sin escribirlo ni cambiar sus campos. Conserva locks/conflictos y no toca preferencias LV-001. Las fechas legacy desconocidas son null y no se inventan recorridos anteriores. Hay seis variantes; los dos IDs originales y su contenido permanecen estables. La confirmación de reinicio informa que se conserva memoria agregada.
+
+Contratos, algoritmo, simulación, límites y prueba manual en VARIETY_ENGINE.md. El motor no cambia corrección de respuestas ni ordena al azar pasos dependientes. No hay otros motores completos ni servicios nuevos.
 
 ## Extensión LV-002
 

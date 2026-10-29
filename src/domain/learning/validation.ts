@@ -18,7 +18,7 @@ function next(value: unknown) { if (value !== null) identifier(value); }
 
 export function validateLesson(value: unknown): Lesson {
   const lesson = record(value);
-  if (lesson.schemaVersion !== 1 || lesson.version !== 1 || lesson.language !== 'fr' || lesson.level !== 'A1') throw Error('Versión o idioma de lección no admitido');
+  if (lesson.schemaVersion !== 1 || !Number.isSafeInteger(lesson.version) || (lesson.version as number) < 1 || lesson.language !== 'fr' || lesson.level !== 'A1') throw Error('Versión o idioma de lección no admitido');
   identifier(lesson.id); text(lesson.title);
   list(lesson.objectives); list(lesson.variants);
   lesson.objectives.forEach(identifier);

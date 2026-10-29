@@ -1,5 +1,9 @@
 # Learning Engine · LV-002
 
+LV-003B: Lesson.version admite enteros positivos; MissionProgress y las transiciones conservan su esquema. Repositorio, proveedor y pantalla seleccionan la lección del catálogo por contentVersion guardada; continuar v1 no cambia a v2. La firma conversacional se deriva del grafo francés en conversation.ts; no evalúa pronunciación ni altera respuestas. Las versiones de contenido anteriores se preservan como regresiones. Ver LV-003B_CONVERSATIONS y VARIETY_ENGINE para comportamiento actual.
+
+Actualización LV-003: las transiciones y el formato MissionProgress v1 no cambian. La UI inicia mediante selección ponderada del repositorio, con seis variantes compatibles; el fallback alternateVariant sigue disponible para la API. La persistencia ahora usa una envoltura v2 con historial acotado, migrando el registro plano v1 sin cambiar sus campos. Reiniciar reemplaza el recorrido, pero conserva estadísticas agregadas y errores mínimos para Variety. Las descripciones siguientes de alternancia/registro plano corresponden a LV-002; consultar VARIETY_ENGINE.md para el comportamiento vigente.
+
 Motor TypeScript puro en `src/domain/learning/`, sin React, almacenamiento, reloj, red ni aleatoriedad. Contratos en `models.ts`: Lesson, LessonVariant, Exercise (choice/text), LearnerAnswer, Evaluation, LearningEvent y MissionProgress. La UI consume estos contratos y no decide qué respuesta es correcta ni cómo se avanza.
 
 `validateLesson(unknown)` comprueba esquema v1, textos, IDs, tipos de ejercicio, objetivos, opciones válidas, destinos, unicidad y alcanzabilidad. Recorre todas las rutas correctas: deben terminar, sin ciclos, con todos los objetivos en el mismo orden. Esto valida estructura y progresión editorial, no certifica una revisión pedagógica externa.

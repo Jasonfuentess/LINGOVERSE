@@ -1,5 +1,9 @@
 # Contenido de la cafetería · LV-002
 
+Vigente desde LV-003B: `cafe.v2.ts` conserva las seis identidades y ocho objetivos con seis conversaciones centrales diferentes, ayuda/traducción explícita e importes ficticios uno/dos/tres euros ligados a su opción correcta. Los diálogos completos están en LV-003B_CONVERSATIONS.md. `cafe.v1.ts` queda congelado; registros contentVersion 1 siguen usando sus textos/calificación, sin actualización automática. cafe.ts resuelve la versión; solo un nuevo recorrido usa v2. Las notas siguientes describen etapas anteriores.
+
+Actualización LV-003: seis variantes finitas. Se conservan intactas matin-lucie y midi-samir; se añaden pluie-camille, carnet-alex, balade-noemie y lecture-hugo con nuevas situaciones editoriales y preguntas equivalentes ya enseñadas. Todas las ayudas, respuestas, calificación y ramas se conservan. Selección ponderada al iniciar, no alternancia obligatoria; reanudar mantiene variante exacta. El contenido sigue en versión 1 porque los IDs/contenidos antiguos permanecen compatibles y el cambio solo agrega variantes. Downgrade a un cliente sin los nuevos IDs no está soportado.
+
 Paquete editorial propio: `src/content/cafe.ts`, `schemaVersion: 1`, `version: 1`, ID `fr-a1-paris-cafe`, francés, objetivo A1. No incluye textos de una fuente copiada, audio ni recursos de terceros. La denominación A1 describe la intención de la práctica; no acredita nivel ni revisión docente independiente.
 
 Dos variantes finitas: `matin-lucie` (mañana con Lucie) y `midi-samir` (mediodía con Samir). Cambian personaje, ambientación y algunas preguntas con traducción. Las expresiones enseñadas, respuestas aceptadas y objetivos son los mismos. Reiniciar alterna variantes incluso si se abandona el recorrido previo; continuar nunca cambia la variante.

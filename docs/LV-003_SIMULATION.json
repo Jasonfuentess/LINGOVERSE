@@ -1,0 +1,29 @@
+{
+  "seed": 903,
+  "sessions": 1000,
+  "completedMissions": 1000,
+  "interactionsPerMission": 8,
+  "distribution": {
+    "matin-lucie": 164,
+    "midi-samir": 162,
+    "pluie-camille": 162,
+    "carnet-alex": 173,
+    "balade-noemie": 166,
+    "lecture-hugo": 173
+  },
+  "consecutiveRepeats": 52,
+  "consecutiveRepeatRate": 0.05205205205205205,
+  "longestRunOfSameVariant": 2,
+  "uniformBaselineRepeats": 185,
+  "firstSessionWithAllVariantsUsed": 9,
+  "singleCandidateSessions": 1000,
+  "singleCandidateRepeats": 999,
+  "emptyLibraryDecision": "no-eligible-content",
+  "retained": {
+    "entries": 66,
+    "recent": 64,
+    "errorFacts": 1,
+    "detectedPriceErrors": 100
+  },
+  "storedCharacters": 21844
+}
