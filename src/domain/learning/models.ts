@@ -20,7 +20,7 @@ interface ExerciseBase {
   correction: string;
 }
 export interface ChoiceExercise extends ExerciseBase { kind: 'choice'; choices: ChoiceOption[] }
-export interface TextExercise extends ExerciseBase { kind: 'text'; accepted: string[]; next: string | null; reply: string }
+export interface TextExercise extends ExerciseBase { kind: 'text'; accepted: string[]; next: string | null; reply: string; writtenRules?: import('./written').WrittenRule[] }
 export type Exercise = ChoiceExercise | TextExercise;
 export interface LessonVariant { id: string; title: string; start: string; exercises: Exercise[] }
 export interface Lesson {
@@ -35,6 +35,7 @@ export interface Lesson {
 }
 export type LearnerAnswer = { kind: 'choice'; choiceId: string } | { kind: 'text'; text: string };
 export interface Evaluation {
+  writtenIssue?: import('./written').WrittenIssue;
   correct: boolean;
   explanation: string;
   correction: string;

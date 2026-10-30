@@ -4,5 +4,5 @@
     "strict": true, "noUncheckedIndexedAccess": true, "outDir": ".test-build",
     "lib": ["ES2022", "DOM"], "types": [], "skipLibCheck": true
   },
-  "include": ["src/domain/**/*.ts", "src/content/cafe.ts", "src/storage/contracts.ts", "src/storage/preferencesRepository.ts", "src/storage/browserStorage.ts", "src/storage/missionRepository.ts"]
+  "include": ["src/domain/**/*.ts", "src/content/cafe.ts", "src/content/roast.ts", "src/content/humor.ts", "src/storage/contracts.ts", "src/storage/preferencesRepository.ts", "src/storage/humorPreferencesRepository.ts", "src/storage/browserStorage.ts", "src/storage/missionRepository.ts"]
 }

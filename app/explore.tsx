@@ -11,6 +11,6 @@ export default function Explore() {
   if (!preferences.onboardingCompleted) return <Redirect href="/onboarding" />;
   return <Page><Copy>EXPLORAR / PRIMERA AVENTURA</Copy><Heading>Entrá en la historia.</Heading>
     <Copy>{preferences.learningLanguage === 'en' ? 'Tu preferencia sigue siendo inglés. La primera aventura disponible es en francés; podés probarla sin cambiar tu perfil. El contenido de inglés está pendiente.' : 'La primera aventura de francés está disponible. Cada recorrido permite tomar decisiones y repasar con ayuda.'}</Copy>
-    <MissionCard /><Button label="Volver al inicio" onPress={() => router.replace('/')} />
+    <MissionCard /><Heading>Modo Sin Pena</Heading><Copy>Roast Me: práctica A1 con humor adulto opcional. Requiere mayoría de edad y consentimiento explícito.</Copy><Button label="Conocer Roast Me" onPress={() => router.push('/roast')} /><Button label="Volver al inicio" onPress={() => router.replace('/')} />
   </Page>;
 }

@@ -4,10 +4,18 @@ import { continueMission, submitAnswer } from '../../domain/learning/engine';
 import type { LearnerAnswer, MissionProgress } from '../../domain/learning/models';
 import { MissionConflictError, MissionRepository } from '../../storage/missionRepository';
 import { deviceStorage } from '../../storage/deviceStorage';
+import type { SavedReaction } from '../../domain/humor/models';
+import { useHumorPreferences } from '../humor/HumorPreferencesProvider';
+import { usePreferences } from '../preferences/PreferencesProvider';
+import { roastLesson, roastLessonV2, roastLessonForProgress } from '../../content/roast';
+import { canRoast } from '../../domain/humor/access';
 
 const repository = new MissionRepository(deviceStorage, cafeLesson, [cafeLessonV1]);
+const roastRepository = new MissionRepository(deviceStorage, roastLesson, [roastLessonV2], 'roast');
 interface MissionState {
+  mode?: 'friendly' | 'roast';
   progress: MissionProgress | null;
+  reaction: SavedReaction | null;
   loading: boolean;
   saving: boolean;
   loadError: string | null;
@@ -18,8 +26,12 @@ interface MissionState {
   advance: () => Promise<boolean>;
 }
 const Context = createContext<MissionState | null>(null);
-export function MissionProvider({ children }: PropsWithChildren) {
+export function MissionProvider({ children, roast = false }: PropsWithChildren<{ roast?: boolean }>) {
+  const activeRepository = roast ? roastRepository : repository;
+  const humor = useHumorPreferences();
+  const profile = usePreferences();
   const [progress, setProgress] = useState<MissionProgress | null>(null);
+  const [reaction, setReaction] = useState<SavedReaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -27,35 +39,37 @@ export function MissionProvider({ children }: PropsWithChildren) {
   const busy = useRef(false);
   const read = useCallback(async () => {
     try {
-      const saved = await repository.load();
+      const saved = await activeRepository.load();
       setProgress(saved);
+      setReaction(activeRepository.getReaction());
       setLoadError(null);
       setSaveError(null);
     } catch { setLoadError('No pudimos leer la aventura: el almacenamiento no está disponible o el progreso es incompatible o está dañado. Podés reintentar o confirmar un reinicio.'); }
     finally { setLoading(false); }
-  }, []);
+  }, [activeRepository]);
   useEffect(() => {
     let active = true;
-    void repository.load().then(saved => {
-      if (active) { setProgress(saved); setLoadError(null); }
+    void activeRepository.load().then(saved => {
+      if (active) { setProgress(saved); setReaction(activeRepository.getReaction()); setLoadError(null); }
     }).catch(() => {
       if (active) setLoadError('No pudimos leer la aventura: el almacenamiento no está disponible o el progreso es incompatible o está dañado. Podés reintentar o confirmar un reinicio.');
     }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [activeRepository]);
   const reload = () => {
     if (busy.current || loading) return;
     setLoading(true);
     void read();
   };
   const persist = async (action: () => Promise<MissionProgress>) => {
-    if (busy.current || loading) return false;
+    if (busy.current || loading || (roast && (humor.loading || !canRoast(humor.settings)))) return false;
     busy.current = true;
     setSaving(true);
     setSaveError(null);
     try {
       const next = await action();
       setProgress(next);
+      setReaction(activeRepository.getReaction());
       setLoadError(null);
       return true;
     } catch (error) {
@@ -65,21 +79,22 @@ export function MissionProvider({ children }: PropsWithChildren) {
     }
     finally { busy.current = false; setSaving(false); }
   };
-  const persistChange = (change: () => MissionProgress) => persist(async () => {
+  const persistChange = (change: () => MissionProgress, writtenInput?: string) => persist(async () => {
     const next = change();
-    await repository.save(next);
+    const locale = profile.preferences?.coachLocale;
+    await activeRepository.save(next, Date.now(), !humor.loading && humor.settings && locale ? { locale, preferences: humor.settings, ...(roast && writtenInput !== undefined ? { writtenInput } : {}) } : undefined);
     return next;
   });
-  const start = () => persist(() => repository.start());
+  const start = () => persist(() => activeRepository.start());
   const answer = (value: LearnerAnswer) => persistChange(() => {
     if (!progress || loadError) throw Error('No hay una aventura cargada');
-    return submitAnswer(cafeLessonForProgress(progress), progress, value);
-  });
+    return submitAnswer(roast ? roastLessonForProgress(progress) : cafeLessonForProgress(progress), progress, value);
+  }, value.kind === 'text' ? value.text : undefined);
   const advance = () => persistChange(() => {
     if (!progress || loadError) throw Error('No hay una aventura cargada');
-    return continueMission(cafeLessonForProgress(progress), progress);
+    return continueMission(roast ? roastLessonForProgress(progress) : cafeLessonForProgress(progress), progress);
   });
-  return <Context.Provider value={{ progress, loading, saving, loadError, saveError, reload, start, answer, advance }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ mode: roast ? 'roast' : 'friendly', progress, reaction, loading, saving, loadError, saveError, reload, start, answer, advance }}>{children}</Context.Provider>;
 }
 export function useMission() {
   const state = useContext(Context);
