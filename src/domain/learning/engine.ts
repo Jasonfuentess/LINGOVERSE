@@ -1,5 +1,6 @@
 import type { Evaluation, Exercise, LearnerAnswer, Lesson, MissionProgress, VariantSelector } from './models';
 import { validateLesson } from './validation';
+import { validateWritten } from './written';
 
 export const alternateVariant: VariantSelector = (lesson, run) => {
   const variant = lesson.variants[run % lesson.variants.length];
@@ -31,6 +32,10 @@ function validAnswer(answer: LearnerAnswer) {
 }
 export function evaluateAnswer(exercise: Exercise, answer: LearnerAnswer): Evaluation {
   validAnswer(answer);
+  if (exercise.kind === 'text' && exercise.writtenRules && answer.kind === 'text') {
+    const result = validateWritten(exercise, answer.text);
+    return { correct: result.correct, explanation: result.explanation, correction: exercise.correction, reply: result.correct ? exercise.reply : '', next: result.correct ? exercise.next : null, ...(result.issue ? { writtenIssue: result.issue } : {}) };
+  }
   let correct = false;
   let explanation = exercise.explanation;
   let reply = '';
@@ -52,6 +57,7 @@ export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: Lea
   if (state.feedback?.correct) throw Error('Leé la respuesta y continuá antes de responder otra vez');
   if (state.events.length >= 1024) throw Error('Se alcanzó el límite de intentos de este recorrido. Reiniciá para practicar de nuevo.');
   const feedback = evaluateAnswer(exercise, answer);
+  if (exercise.kind === 'text' && exercise.writtenRules && answer.kind === 'text') answer = { kind: 'text', text: validateWritten(exercise, answer.text).retained };
   return { ...state, feedback, events: [...state.events, { type: 'answer', nodeId: exercise.id, answer }] };
 }
 export function continueMission(lesson: Lesson, state: MissionProgress): MissionProgress {

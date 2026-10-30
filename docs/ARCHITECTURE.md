@@ -47,3 +47,9 @@ No se incorpora Zustand porque no es necesario para este único estado pequeño;
 Objetivo SDK 57, justificado por la recomendación oficial de creación durante la transición a SDK 58: [Expo SDK 58](https://expo.dev/changelog/sdk-58). Persistencia basada en la API oficial [SQLite kv-store](https://docs.expo.dev/versions/latest/sdk/sqlite/). La compatibilidad efectiva requiere ejecutar setup, `expo install --check` y Expo Doctor: no fue posible certificarla en este entorno.
 
 Actualización LV-001B: `package.json` declara ahora todas las dependencias necesarias basadas en la plantilla y módulos oficiales de la rama SDK 57, incluidas React Native 0.86.3 y TypeScript 6.0.3. `setup` realiza una instalación y valida con la CLI local sin actualizar el SDK ni mutar el manifiesto para escoger versiones. `check:expo` y `check:doctor` exponen las comprobaciones; `diagnose:npm` separa escritura local, DNS y conexión HTTPS. Los rangos declarados no sustituyen un lockfile ni una comprobación efectiva con dependencias instaladas.
+
+## Incremento LV-004A
+
+`src/domain/humor/` contiene contratos, preferencias, contexto comprobado y selección editorial pura. `src/content/humor.ts` contiene cuatro personalidades y 128 reacciones. La selección delega en Variety Engine; no modifica Learning Engine ni contenido francés v1/v2. `src/features/humor/` contiene ajustes, proveedor y tarjeta por texto.
+
+El repositorio de misión incorpora snapshot y apariciones de reacciones en envelope v3 (lectura de formatos previos). `HumorPreferencesRepository` guarda ajustes en clave independiente. Ambos usan `storage/serialization.ts`, comparación de registros y los locks que expone el adaptador. El estado de UI cambia solamente tras guardar. Reanudación conserva reacción; datos inconsistentes de reacción se ocultan sin borrar progreso. Ver [HUMOR_ENGINE.md](HUMOR_ENGINE.md).

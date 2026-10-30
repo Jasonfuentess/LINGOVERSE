@@ -16,6 +16,7 @@
     "test": "node scripts/test.mjs",
     "test:web": "node scripts/check-web.mjs",
     "simulate:variety": "node scripts/simulate-variety.mjs",
+    "simulate:humor": "node scripts/simulate-humor.mjs",
     "document:conversations": "node scripts/document-conversations.mjs",
     "check:expo": "node node_modules/expo/bin/cli install --check",
     "check:doctor": "npm exec --yes -- expo-doctor",

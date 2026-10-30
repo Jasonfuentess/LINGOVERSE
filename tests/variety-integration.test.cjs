@@ -21,7 +21,7 @@ test('legacy progress migrates in memory without changing variant, state, feedba
   assert.equal(repo.getHistory().entries.find(item => item.id.endsWith(':matin-lucie')).count, 1);
   legacy = submitAnswer(cafeLesson, legacy, { kind: 'choice', choiceId: 'bonjour-simple' });
   await repo.save(legacy);
-  assert.equal(JSON.parse(await storage.getItem(key)).version, 2);
+  assert.equal(JSON.parse(await storage.getItem(key)).version, 3);
   const fresh = new MissionRepository(storage, cafeLesson);
   assert.deepEqual(await fresh.load(), legacy);
   assert.deepEqual(fresh.getHistory(), repo.getHistory());

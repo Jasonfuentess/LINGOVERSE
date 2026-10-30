@@ -7,7 +7,8 @@ import { createServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const browserPath = process.env.LV_BROWSER_PATH;
+const browserArgument = process.argv.indexOf('--browser');
+const browserPath = process.env.LV_BROWSER_PATH ?? (browserArgument >= 0 ? process.argv[browserArgument + 1] : undefined);
 if (!browserPath) throw Error('Set LV_BROWSER_PATH to an existing Chromium/Chrome/Edge executable. Export web first.');
 const artifacts = path.resolve('.web-check');
 await mkdir(artifacts, { recursive: true });
@@ -86,7 +87,7 @@ try {
   const correct = async () => {
     const retry = await evaluate(`!![...document.querySelectorAll('[role="button"]')].find(item => item.textContent.includes('Volver a comprobar'))`);
     await button(retry ? 'Volver a comprobar' : 'Comprobar respuesta');
-    await waitFor('¡Bien resuelto!');
+    await waitFor('Continuar conversación');
     await button('Continuar conversación');
   };
   const reload = async () => {
@@ -102,8 +103,54 @@ try {
   console.log('Browser:', await command('Browser.getVersion'));
   await command('Page.enable');
   await command('Runtime.enable');
+  await command('Page.bringToFront');
+  await command('Emulation.setFocusEmulationEnabled', { enabled: true });
   await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await command('Page.navigate', { url });
+  if (process.env.LV_ROAST_QA === '1' || process.argv.includes('--roast')) {
+    await waitFor('Tu viaje empieza'); await radio('Francés'); await radio('El Salvador'); await button('Entrar como invitado');
+    await waitFor('Explorar aventuras'); await button('Explorar aventuras'); await button('Conocer Roast Me');
+    await waitFor('Francés con filo');
+    await click('checkbox', 'Confirmo que soy mayor de edad');
+    await click('checkbox', 'Acepto explícitamente'); await button('Aceptar y entrar');
+    await waitFor('Comenzar aventura'); await button('Comenzar aventura'); await waitFor('Entrás al café');
+    await evaluate(`document.querySelector('textarea').focus()`);
+    await fill('Bon Jovi');
+    // Reduced mobile viewport exercises layout/scroll; it is NOT a real OS keyboard.
+    for (const width of [320, 390]) {
+      await command('Emulation.setDeviceMetricsOverride', { width, height: 420, deviceScaleFactor: 1, mobile: true });
+      await sleep(300);
+      const bounds = await evaluate(`(() => { const input=document.querySelector('textarea'); const button=[...document.querySelectorAll('[role="button"]')].find(b=>b.textContent==='Comprobar respuesta'); const i=input.getBoundingClientRect(); const b=button.getBoundingClientRect(); return {inputTop:i.top,inputBottom:i.bottom,buttonTop:b.top,buttonBottom:b.bottom,height:window.visualViewport.height,focused:document.activeElement===input,overflow:document.documentElement.scrollWidth>window.innerWidth}; })()`);
+      assert.equal(bounds.focused,true); assert.equal(bounds.overflow,false);
+      if (!(bounds.inputTop>=0 && bounds.buttonBottom<=bounds.height)) console.log('Scroll diagnostics',await evaluate(`Array.from(document.querySelectorAll('div')).filter(e=>getComputedStyle(e).overflowY==='auto'||getComputedStyle(e).overflowY==='scroll').map(e=>({height:e.clientHeight,scrollHeight:e.scrollHeight,scrollTop:e.scrollTop,top:e.getBoundingClientRect().top}))`));
+      assert.ok(bounds.inputTop>=0 && bounds.buttonBottom<=bounds.height,JSON.stringify(bounds));
+    }
+    const keyboardShot=await command('Page.captureScreenshot',{format:'png'});
+    await writeFile(path.join(artifacts,'roast-reduced-viewport.png'),Buffer.from(keyboardShot.data,'base64'));
+    await button('Comprobar respuesta'); await waitFor('Vamos por partes');
+    const readRoast = () => evaluate(`JSON.parse(localStorage.getItem('lingoverse.mission.roast-cafe-fr-a1.v1'))`);
+    const greeting=await readRoast(); assert.equal(greeting.reaction.referenceId,'reference-v1:bon-jovi');
+    await reload(); await waitFor('Vamos por partes'); assert.deepEqual((await readRoast()).reaction,greeting.reaction);
+    await fill('Bonjour'); await correct();
+    await radio('thé, s’il vous plaît.'); await correct();
+    await radio('emporter'); await correct();
+    const without = await evaluate(`document.body.innerText.includes('Sans sucre, merci.')`);
+    await radio(without ? 'Sans sucre, merci.' : 'Non, merci'); await correct();
+    await fill("C'est combien ?"); await correct();
+    const amounts = {'matin-lucie':'Trois euros','midi-samir':'Deux euros','pluie-camille':'Deux euros','carnet-alex':'Un euro','balade-noemie':'Trois euros','lecture-hugo':'Trois euros'};
+    await radio(amounts[(await readRoast()).progress.variantId]); await correct();
+    await fill('Messi Goku'); await button('Comprobar respuesta'); await waitFor('Vamos por partes');
+    const thanks=await readRoast(); assert.equal(thanks.reaction.referenceId,'reference-v1:messi-goku'); assert.equal(thanks.progress.feedback.correct,false); assert.equal(thanks.progress.events.at(-1).answer.text,'');
+    await reload(); await waitFor('Vamos por partes'); assert.deepEqual((await readRoast()).reaction,thanks.reaction);
+    await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+    await evaluate(`(() => { const line=[...document.querySelectorAll('div')].find(e=>e.textContent===${JSON.stringify(thanks.reaction.text)}); if (!line) throw Error('Missing reference feedback'); line.scrollIntoView({block:'center'}); })()`);
+    await sleep(150);
+    const shot=await command('Page.captureScreenshot',{format:'png'}); await writeFile(path.join(artifacts,'roast-easter-egg.png'),Buffer.from(shot.data,'base64'));
+    await button('Revocar consentimiento'); await waitFor('Francés con filo');
+    assert.equal(await evaluate(`document.body.innerText.includes(${JSON.stringify(thanks.reaction.text)})`),false);
+    assert.deepEqual(runtimeErrors,[]);
+    console.log('PASS: Roast consent, 320/390 px reduced viewport, input focus, visible input/action, no horizontal overflow, Bon Jovi and Messi Goku incorrect, snapshots reload, revocation. Reduced viewport is not an OS keyboard.');
+  } else {
   await waitFor('Tu viaje empieza');
   await radio('Francés');
   for (const region of ['El Salvador', 'México', 'Colombia', 'Argentina']) await radio(region);
@@ -157,6 +204,7 @@ try {
   await button('Volver a Explorar'); await button('Volver al inicio'); await waitFor('Tu idioma elegido sigue siendo inglés');
   assert.deepEqual(runtimeErrors, [], 'No uncaught browser runtime errors');
   console.log('PASS: onboarding/profile, English preference preserved, tea/takeaway/sugar branch, wrong feedback reload, eight steps, completion reload, cancel/restart, persisted selected variant, mobile screenshot.');
+  }
 } catch (error) {
   console.error('Browser stderr:', browserError);
   throw error;

@@ -50,6 +50,13 @@ export function validateLesson(value: unknown): Lesson {
         }
         if (!correct) throw Error('Faltan respuestas correctas');
       } else if (exercise.kind === 'text') {
+        if (exercise.writtenRules !== undefined) {
+          if (!Array.isArray(exercise.writtenRules) || exercise.writtenRules.length > 100) throw Error('Reglas escritas inválidas');
+          for (const rawRule of exercise.writtenRules) {
+            const rule = record(rawRule); text(rule.input); text(rule.explanation);
+            if (!['spelling', 'vocabulary', 'structure', 'unknown'].includes(String(rule.issue))) throw Error('Diagnóstico desconocido');
+          }
+        }
         list(exercise.accepted); exercise.accepted.forEach(text); next(exercise.next); text(exercise.reply);
       } else throw Error('Tipo de ejercicio no admitido');
     }

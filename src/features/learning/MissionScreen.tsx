@@ -6,22 +6,28 @@ import { currentExercise } from '../../domain/learning/engine';
 import { usePreferences } from '../preferences/PreferencesProvider';
 import { ExerciseView } from './ExerciseView';
 import { useMission } from './MissionProvider';
+import { CoachReaction } from '../humor/CoachReaction';
+import { roastLessonForProgress } from '../../content/roast';
+import { useHumorPreferences } from '../humor/HumorPreferencesProvider';
+import { disableAdult } from '../../domain/humor/preferences';
 
 export function MissionScreen() {
   const preferences = usePreferences();
   const state = useMission();
+  const humor = useHumorPreferences();
   const router = useRouter();
   const [confirmRestart, setConfirmRestart] = useState(false);
   if (preferences.loading || state.loading) return <Loading />;
   if (!preferences.preferences) return <Page><Notice message={preferences.error ?? 'No pudimos leer las preferencias.'} /><Button label="Volver al inicio" onPress={() => router.replace('/')} /></Page>;
   if (!preferences.preferences.onboardingCompleted) return <Redirect href="/onboarding" />;
   const progress = state.progress;
-  const cafeLesson = cafeLessonForProgress(progress);
+  const cafeLesson = state.mode === 'roast' ? roastLessonForProgress(progress) : cafeLessonForProgress(progress);
   const variant = cafeLesson.variants.find(item => item.id === progress?.variantId);
   const errors = progress?.events.filter(event => event.type === 'answer').length ?? 0;
   const submittedAnswer = progress?.events.filter(event => event.type === 'answer').at(-1)?.answer;
   return <Page><Copy>PARÍS / CAFETERÍA · FRANCÉS A1</Copy>
-    <Button label="Volver a Explorar" disabled={state.saving} onPress={() => router.replace('/explore')} />
+    {state.mode === 'roast' && <><Heading>Roast Me · Sin Pena</Heading><Copy>Humor adulto consentido · Entrenador por texto, sin audio. Podés salir o revocar en cualquier momento.</Copy><Button variant="secondary" label="Revocar consentimiento y salir de Roast Me" disabled={humor.saving} onPress={() => { if (humor.settings) void humor.save(disableAdult(humor.settings)); }} /></>}
+    <Button variant="secondary" label="Volver a Explorar" disabled={state.saving} onPress={() => router.replace('/explore')} />
     {state.loadError ? <><Heading>Tu avance necesita revisión</Heading><Notice message={state.loadError} /><Button label="Reintentar lectura" disabled={state.saving} onPress={state.reload} /></> : !progress ? <>
       <Heading>Un café en París</Heading><Copy>Aprendé a saludar, pedir café o té, responder preguntas, preguntar el precio y despedirte. Vas a leer expresiones útiles antes de usarlas.</Copy>
       <Card><Copy>8 interacciones · Sin tiempo límite · Práctica escrita y de comprensión</Copy><Copy>Las ayudas permanecen visibles: completar este recorrido guiado no certifica dominio del nivel A1.</Copy><Copy>Tu avance se guarda solo en este dispositivo. Las voces y la evaluación oral no están disponibles.</Copy></Card>
@@ -33,10 +39,11 @@ export function MissionScreen() {
       <Copy>{variant?.title} · {progress.completedObjectives.length}/8 pasos completados</Copy>
       <ExerciseView key={`${progress.run}:${progress.nodeId}`} exercise={currentExercise(cafeLesson, progress)} feedback={progress.feedback} submittedAnswer={submittedAnswer} saving={state.saving} error={state.saveError} onAnswer={state.answer} onContinue={state.advance} />
     </>}
+    {!state.loadError && progress?.status === 'completed' && <CoachReaction />}
     {(!progress || progress.status === 'completed' || state.loadError) && state.saveError && <Notice message={state.saveError} />}
     {(progress || state.loadError) && (confirmRestart ? <Card><Heading>¿Empezar otro recorrido?</Heading><Copy>Se reemplazará el recorrido actual. Se conserva un resumen local de variantes vistas y errores detectados para orientar la variedad, además de tus preferencias. Si el registro actual está dañado, será reemplazado.</Copy>
       <Button label={state.saving ? 'Guardando…' : 'Confirmar reinicio'} disabled={state.saving} onPress={() => { void state.start().then(saved => { if (saved) setConfirmRestart(false); }); }} />
-      <Button label="Conservar mi avance" disabled={state.saving} onPress={() => setConfirmRestart(false)} />
-    </Card> : <Button label="Reiniciar aventura" disabled={state.saving} onPress={() => setConfirmRestart(true)} />)}
+      <Button variant="secondary" label="Conservar mi avance" disabled={state.saving} onPress={() => setConfirmRestart(false)} />
+    </Card> : <Button variant="secondary" label="Reiniciar aventura" disabled={state.saving} onPress={() => setConfirmRestart(true)} />)}
   </Page>;
 }

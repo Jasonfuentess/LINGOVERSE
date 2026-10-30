@@ -6,6 +6,7 @@
     "version": "0.1.0",
     "orientation": "default",
     "userInterfaceStyle": "light",
+    "android": { "softwareKeyboardLayoutMode": "resize" },
     "plugins": ["expo-router", "expo-sqlite"],
     "web": { "bundler": "metro", "output": "single", "lang": "es" }
   }
