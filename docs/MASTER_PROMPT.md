@@ -1,5 +1,7 @@
 # LINGOVERSE — PROMPT MAESTRO DE DESARROLLO V2
 
+> **Actualización de dirección de producto:** [Visión de Producto V3](PRODUCT_VISION.md) recoge la dirección acordada más reciente y prevalece sobre este documento V2 en concepto, alcance y prioridades de producto. Ver [ROADMAP.md](ROADMAP.md) para su secuencia y [PROJECT_STATE.md](PROJECT_STATE.md) para capacidades realmente implementadas y verificadas. Se conserva el cuerpo V2 como referencia técnica e histórica en todo lo que no contradiga V3. En particular, Mamá de LATAM deja de ser requisito de beta y la experiencia oral sigue pendiente de implementación/validación. Esta actualización documental no inicia nuevas funcionalidades.
+
 ## ROL Y OBJETIVO
 
 Actúa como un equipo senior de arquitectura de software, desarrollo móvil, UX/UI, diseño de videojuegos, enseñanza de idiomas, ingeniería de audio y QA.

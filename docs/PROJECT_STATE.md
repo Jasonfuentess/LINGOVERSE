@@ -1,5 +1,13 @@
 # Estado del proyecto
 
+## Dirección de producto V3 registrada
+
+Se incorporó íntegramente la visión acordada por el usuario en [PRODUCT_VISION.md](PRODUCT_VISION.md). Se creó [ROADMAP.md](ROADMAP.md) con su secuencia: conversación → Diario V1 → Pasaporte V1 → recompensas ligeras → QA de beta. MASTER_PROMPT conserva su cuerpo V2 e indica la precedencia de V3 para decisiones de producto.
+
+Esto registra dirección futura, no implementación ni validación técnica de audio, reconocimiento, destinos, Londres/inglés, diario, pasaporte, economía o cinco secciones plenamente funcionales. Roast Me independiente sigue disponible; su uso como estilo opcional en aventuras compatibles queda pendiente. Mamá de LATAM no es requisito de beta. Diario y pasaporte deben compartir progreso real; completar una misión no acredita dominio.
+
+Cambio exclusivamente documental. Inspección de AGENTS, especificación maestra y estado; Git de lectura confirmó `feature/lv-004-humor-engine` y árbol limpio al comenzar esta actualización. Creados PRODUCT_VISION y ROADMAP; modificados MASTER_PROMPT y PROJECT_STATE. Validación: revisión de coherencia/enlaces locales y `git diff --check`; no se repitieron pruebas de aplicación porque no cambió código. Sin commits, push, merge, cambios de rama, dependencias ni despliegues.
+
 ## LV-004B-02 — teclado y humor contextual universal (2026-10-29)
 
 Rama `feature/lv-004-humor-engine` comprobada con Git de lectura. Conservados los cambios previos. Sin cambios de rama, commit, push, merge, deploy, dependencias nuevas o Mamá de LATAM.
