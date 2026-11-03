@@ -77,3 +77,13 @@ Simulación de humor: 11 600 reacciones; 2900 por región; 82/128 IDs utilizados
 8. Móvil: `npm start` con Expo Go compatible con SDK 57; `npm run android` con emulador local configurado; iOS requiere dispositivo compatible o macOS/Xcode para simulador. No se certificaron aquí ejecución nativa, SQLite real ni comportamiento visual.
 
 Pendientes: aceptación visual y móvil, revisión lingüística/cultural externa, evaluación de calidad de las reacciones con usuarios. No se implementaron audio, modos adultos completos, IA externa ni LV-004B.
+# Extensión LV-005A: estilo en aventuras
+
+La cafetería permite seleccionar Roast como estilo opcional, además del modo
+independiente existente. `adventureRoast` es un campo opcional compatible con ajustes
+v1, desactivado por ausencia. Requiere consentimiento válido, selección explícita y
+comentarios habilitados; cambiar intensidad no lo activa. El repositorio revalida
+consentimiento persistido, reutiliza bibliotecas/Variety y restaura el snapshot.
+Revocar desactiva también esta preferencia y la UI cae al feedback educativo seguro.
+No se generan nuevos diagnósticos ni se amplían patrones de referencias en cafetería.
+Detalles y pruebas en [CONVERSATIONAL_EXPERIENCE.md](CONVERSATIONAL_EXPERIENCE.md).

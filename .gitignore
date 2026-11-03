@@ -7,3 +7,30 @@ dist/
 *.log
 .env*
 !.env.example
+
+# Local backups
+.backups/
+
+# Dependencies and generated output
+node_modules/
+.expo/
+dist/
+coverage/
+web-build/
+.web-check/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Operating system files
+.DS_Store
+Thumbs.db

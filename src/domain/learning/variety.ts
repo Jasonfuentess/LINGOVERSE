@@ -35,8 +35,8 @@ export function historyForProgress(lesson: Lesson, history: VarietyHistory, prev
   next.events.forEach((event, index) => {
     if (event.type === 'answer') {
       const exercise = currentExercise(lesson, replay);
-      replay = submitAnswer(lesson, replay, event.answer);
-      if (index >= offset && !replay.feedback!.correct) {
+      replay = submitAnswer(lesson, replay, event.answer, event.support);
+      if (index >= offset && !replay.feedback!.correct && replay.feedback!.writtenIssue !== 'unknown') {
         result = recordError(result, { id: `${lesson.id}:${exercise.id}`, scopeId: lesson.id, objectiveId: exercise.objectiveId, exerciseId: exercise.id, variantId: next.variantId, language: lesson.language }, at);
       }
     } else {

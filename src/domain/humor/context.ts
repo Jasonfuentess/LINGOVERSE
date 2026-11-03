@@ -3,7 +3,7 @@ import { evaluateAnswer } from '../learning/engine';
 import type { VarietyHistory } from '../variety/models';
 import type { HumorContext } from './models';
 
-export function humorContext(lesson: Lesson, state: MissionProgress, history: VarietyHistory): HumorContext | null {
+export function humorContext(lesson: Lesson, state: MissionProgress, history: VarietyHistory, standaloneRoast = false): HumorContext | null {
   const last = state.events.at(-1);
   if (!last) return null;
   if (last.type === 'continue' && state.status !== 'completed' && ![3, 6].includes(state.completedObjectives.length)) return null;
@@ -11,8 +11,9 @@ export function humorContext(lesson: Lesson, state: MissionProgress, history: Va
   const answer = answerEvents.at(-1);
   const exercise = lesson.variants.find(variant => variant.id === state.variantId)?.exercises.find(item => item.id === answer?.nodeId);
   if (!answer || !exercise) return null;
+  if (state.feedback?.writtenIssue === 'unknown' && !standaloneRoast) return null;
   const attempts = answerEvents.filter(event => event.nodeId === exercise.id);
-  const wrong = attempts.filter(event => !evaluateAnswer(exercise, event.answer).correct).length;
+  const wrong = attempts.filter(event => { const result = evaluateAnswer(exercise, event.answer); return !result.correct && result.writtenIssue !== 'unknown'; }).length;
   const correct = evaluateAnswer(exercise, answer.answer).correct;
   const fact = history.errors.find(item => item.scopeId === lesson.id && item.exerciseId === exercise.id && item.objectiveId === exercise.objectiveId && item.language === lesson.language);
   const category = last.type === 'continue' ? state.status === 'completed' ? 'celebration' : 'progress' : correct ? wrong > 0 ? 'recovery' : 'correct' : fact && fact.count >= 3 ? 'recurring' : attempts.length > 1 ? 'retry' : 'error';

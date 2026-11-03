@@ -23,7 +23,14 @@ export class MissionRepository {
   private reaction: SavedReaction | null = null;
   private reference: ReferenceEvidence | null = null;
   constructor(private readonly storage: KeyValueStorage, private readonly lesson: Lesson, private readonly archives: Lesson[] = [], private readonly mode: 'friendly' | 'roast' = 'friendly') {}
-  private get library() { return this.mode === 'roast' ? roastLibrary : reactionLibrary; }
+  private get library() { return this.mode === 'roast' ? roastLibrary : [...reactionLibrary, ...roastLibrary]; }
+  private async adventureRoastAllowed(): Promise<boolean> {
+    try {
+      const raw = await this.storage.getItem('lingoverse.humor-preferences.v1');
+      const settings = raw ? JSON.parse(raw) : null;
+      return canRoast(settings) && settings.adventureRoast === true;
+    } catch { return false; }
+  }
   private async requireAccess() {
     if (this.mode !== 'roast') return;
     const raw = await this.storage.getItem('lingoverse.humor-preferences.v1');
@@ -59,13 +66,14 @@ export class MissionRepository {
     }
     this.current = progress;
     this.history = validateHistory(annotateConversationProfiles(history, [this.lesson, ...this.archives]));
-    const context = humorContext(this.contentFor(progress), progress, this.history);
+    const context = humorContext(this.contentFor(progress), progress, this.history, this.mode === 'roast');
     this.reference = this.mode === 'roast' ? restoreReference(envelope.reference, context) : null;
     const restoredContext = context && this.reference ? { ...context, referenceId: this.reference.referenceId } : context;
     this.reaction = envelope.version === 3 ? restoreReaction(envelope.reaction, restoredContext, this.history, this.library) : null;
     if (this.mode === 'roast') {
       try { await this.requireAccess(); } catch { this.reaction = null; }
     }
+    if (this.mode === 'friendly' && this.reaction?.mode === 'roast' && !await this.adventureRoastAllowed()) this.reaction = null;
     return progress;
   }
   getHistory(): VarietyHistory { return validateHistory(this.history); }
@@ -89,7 +97,8 @@ export class MissionRepository {
     let reference = this.reference;
     const newAction = !this.current || this.current.run !== verified.run || verified.events.length > this.current.events.length;
     if (newAction) {
-      let context = humorContext(content, verified, history);
+      const reactionMode = this.mode === 'roast' || (humor?.preferences.enabled && humor.preferences.adventureRoast === true && canRoast(humor.preferences) && await this.adventureRoastAllowed()) ? 'roast' : 'friendly';
+      let context = humorContext(content, verified, history, this.mode === 'roast');
       reference = null;
       if (context && this.mode === 'roast' && this.current && humor?.writtenInput !== undefined && verified.events.length === this.current.events.length + 1 && verified.events.at(-1)?.type === 'answer') {
         // Verify that transient input yields exactly this saved action before deriving evidence.
@@ -98,11 +107,12 @@ export class MissionRepository {
         reference = detectReference(humor.writtenInput, context);
         if (reference) context = { ...context, referenceId: reference.referenceId };
       }
-      reaction = context && humor ? selectReaction(context, humor.locale, humor.preferences, history, humor.random ?? seededRandom((at >>> 0) ^ verified.events.length), this.library, this.mode) : null;
+      reaction = context && humor ? selectReaction(context, humor.locale, humor.preferences, history, humor.random ?? seededRandom((at >>> 0) ^ verified.events.length), this.library, reactionMode) : null;
       if (reaction && context) history = validateHistory(noteAppearance(history, reaction.id, { category: 'reaction', language: content.language, level: content.level, scopeId: content.id, objectives: [context.objectiveId], variantId: verified.variantId }, at));
     }
     const write = async () => {
       await this.requireAccess();
+      if (this.mode === 'friendly' && reaction?.mode === 'roast' && !await this.adventureRoastAllowed()) reaction = null;
       const actual = await this.storage.getItem(this.key);
       if (actual !== expected) throw new MissionConflictError();
       const raw = JSON.stringify({ version: 3, progress: verified, history, reaction, ...(reference ? { reference } : {}) });

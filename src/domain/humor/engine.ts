@@ -12,12 +12,14 @@ export function validateLibrary(library: EditorialReaction[]): void {
   const ids = new Set<string>();
   if (!Array.isArray(library) || library.length > 512) throw Error('Biblioteca de humor inválida');
   for (const item of library) {
+    if(item.learningLanguages && (!Array.isArray(item.learningLanguages)||!item.learningLanguages.length||item.learningLanguages.some(language=>language!=='fr'&&language!=='en'))) throw Error('Idioma de reacción inválido');
     validId(item.id);
     if (ids.has(item.id) || item.version !== 1 || !coaches.some(coach => coach.locale === item.locale) || !categories.includes(item.category) || !['friendly', 'adult', 'roast', 'latam-mom'].includes(item.mode) || !['gentle', 'playful'].includes(item.intensity) || typeof item.explicit !== 'boolean' || typeof item.text !== 'string' || item.text.trim().length < 10 || item.text.length > 500) throw Error('Reacción editorial inválida');
     ids.add(item.id);
   }
 }
 function categorySupported(item: EditorialReaction, context: HumorContext | null, history: VarietyHistory): boolean {
+  if(context && item.learningLanguages && !item.learningLanguages.includes(context.learningLanguage)) return false;
   if (item.referenceId) {
     const reference = humorReferences.find(r => r.id === item.referenceId);
     if (!context || context.referenceId !== item.referenceId || !reference || !referenceMatchesContext(reference, context)) return false;

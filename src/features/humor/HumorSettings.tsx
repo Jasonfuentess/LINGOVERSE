@@ -12,7 +12,7 @@ export function HumorSettings() {
   if (!state.settings) return <Card><Notice message={state.error ?? 'Ajustes no disponibles'} /><Button label="Reintentar ajustes" onPress={state.reload} /><Button label="Restablecer humor seguro" disabled={state.saving} onPress={() => { void state.save(humorDefaults()); }} /></Card>;
   const settings = state.settings;
   return <Card><Heading>Tu entrenador</Heading><Copy>{coach?.name}: {coach?.personality}</Copy>
-    <Copy>El entrenador acompaña por texto. El audio todavía no está disponible.</Copy>
+    <Copy>El entrenador acompaña por texto y puede leerse con una voz sintética del dispositivo. Su personalidad regional no garantiza una voz con ese acento.</Copy>
     <Copy>Comentarios amistosos: {settings.enabled ? 'activados' : 'desactivados'}. Se guardan al cambiar cada opción. La enseñanza funciona también sin humor.</Copy>
     <Button label={settings.enabled ? 'Desactivar humor amistoso' : 'Activar humor amistoso'} disabled={state.saving} onPress={() => { void state.save({ ...settings, enabled: !settings.enabled }); }} />
     <View accessibilityRole="radiogroup" accessibilityLabel="Intensidad del humor amistoso" style={{ gap: 12 }}><Choice label="Suave" detail="Acompañamiento breve y tranquilo." selected={settings.intensity === 'gentle'} disabled={state.saving} onPress={() => { void state.save({ ...settings, intensity: 'gentle' }); }} />

@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
 import { Pressable, Text } from 'react-native';
-import { Button, Card, Copy, Heading, Loading, Notice, Page, styles } from '../src/components/ui';
+import { Button, Card, Copy, Loading, Notice, Page, styles } from '../src/components/ui';
 import { canRoast } from '../src/domain/humor/access';
 import { disableAdult, grantAdultConsent } from '../src/domain/humor/preferences';
 import { useHumorPreferences } from '../src/features/humor/HumorPreferencesProvider';
 import { MissionProvider } from '../src/features/learning/MissionProvider';
 import { MissionScreen } from '../src/features/learning/MissionScreen';
 import { usePreferences } from '../src/features/preferences/PreferencesProvider';
+import { Intro } from '../src/components/Editorial';
+import { CoachCharacter } from '../src/features/humor/CoachCharacter';
+import { coaches } from '../src/content/humor';
 
 export default function Roast() {
   const humor = useHumorPreferences();
@@ -18,7 +21,9 @@ export default function Roast() {
   if (profile.loading || humor.loading) return <Loading />;
   if (!profile.preferences?.onboardingCompleted) return <Redirect href="/onboarding" />;
   if (canRoast(humor.settings)) return <MissionProvider roast><MissionScreen /></MissionProvider>;
-  return <Page><Copy>MODO SIN PENA / ROAST ME</Copy><Heading>Francés con filo</Heading>
+  const coach = coaches.find(item => item.locale === profile.preferences?.coachLocale);
+  return <Page><Intro label="MODO SIN PENA / ROAST ME" title="Francés con filo" description="Equivocarse es parte del viaje. Reírte también puede serlo." />
+    {coach && <CoachCharacter name={coach.name} locale={coach.locale} tone="roast" text={coach.personality} />}
     <Copy>Ocho interacciones A1 de «Un café en París», con correcciones reales y humor intenso de tu entrenador regional. Incluye groserías, insultos amistosos y sarcasmo dirigidos a los intentos de la práctica. No evalúa pronunciación.</Copy>
     <Card><Copy>Solo para mayores de edad que lo elijan. Podés rechazar y seguir aprendiendo normalmente. El consentimiento se guarda solo en este dispositivo; podés revocarlo en Perfil o durante el recorrido. No necesitamos tu fecha de nacimiento.</Copy>
       <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: adult }} accessibilityLabel="Confirmo que soy mayor de edad" onPress={() => setAdult(!adult)} style={styles.choice}><Text style={styles.choiceTitle}>{adult ? '☑' : '☐'} Confirmo que soy mayor de edad</Text></Pressable>

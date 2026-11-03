@@ -1,12 +1,31 @@
 # Hoja de ruta — Visión V3
 
+## Secuencia actual acordada (31-oct-2026)
+
+**Prioridad vigente: LV-007-LEARN-02**, rescate surgido de QA real no aprobado de LEARN-01. Enseñar y construir respuestas en las tres aventuras antes de evaluar, tres modos por idioma, aproximaciones curadas con audio original, recuperación sin depender del micrófono y evidencia de ayuda sin dominio ficticio. Validar con principiante, voz/ralentización o grupos alternativos, Roast consentido y disposición/accesibilidad móvil antes de LV-007B/Live. Implementación193/193, aceptación manual pendiente; detalles en PROJECT_STATE y guía QA de LEARN-02. La secuencia siguiente conserva antecedentes de LEARN-01.
+
+1. **LV-007-LEARN-01:** preparar a principiantes absolutos antes de responder en una escena existente de francés y otra de inglés; modo guiado/autónomo y ayuda por idioma, reconocimiento revisable, coherencia pregunta/respuesta y conservación del diseño LV-007-UI-01. Validar con alguien que desconoce la pronunciación, sin notas fonéticas ni nivel CEFR certificado.
+2. **LV-007B:** conversaciones dinámicas y reacciones naturales, pendiente de especificación y autorización después de validar esta base. No se implementa por figurar aquí.
+3. **Roast Me Live — futuro:** conversación oral adulta inicialmente por turnos; personalidad regional provocadora con puteadas auténticas, exageración, sarcasmo, memes y variedad editorial. Intensidades y consentimiento específico para contenido fuerte; no suavizar el extremo a frases motivacionales con humor leve. Reacciones habladas, risas y enseñanza por voz con recursos reales; corrección y nueva práctica al terminar el roast. Basarlo solo en errores suficientemente fiables, nunca en una transcripción dudosa. Reducción de intensidad, desactivación y revocación inmediatas; experiencia normal separada. Excluir características sensibles, amenazas y humillación personal ajena a la práctica. Evaluar continuidad/baja latencia después, sin compromiso técnico aún. Ver requisito completo en [PRODUCT_VISION.md](PRODUCT_VISION.md).
+
+Prerequisitos de Live: QA de STT con principiantes y separación de incertidumbre/errores educativos; voz y cancelación verificadas; contenido regional y variedad editorial; consentimiento propio y revocación de texto/audio; evaluación técnica y de privacidad antes de proponer proveedores o costes. **No desarrollar Live en LV-007-LEARN-01 ni añadir nuevas aventuras.**
+
+Los apartados siguientes conservan la planificación V3 anterior; su «base actual» es histórica. Consultar PROJECT_STATE para capacidades y pruebas presentes.
+
 Dirección acordada en [PRODUCT_VISION.md](PRODUCT_VISION.md). Esta hoja ordena trabajo futuro; no acredita funcionalidades implementadas ni inicia una tarea de código. El estado y la evidencia de ejecución están en [PROJECT_STATE.md](PROJECT_STATE.md).
 
 ## Base actual
 
+Actualización LV-005A (2026-10-30): cafetería con presentación conversacional,
+historial de intervenciones verificadas, escena local y Roast opcional consentido
+implementados. 100/100 pruebas, typechecks, lint y export aprobados; recorridos Chrome
+desktop/móvil verificados. Android se intentó pero no cargó la misión; teclado nativo
+y Safari/iOS pendientes. Contratos de voz y hechos educativos solo preparados, sin
+audio, diario ni pasaporte. Detalle en [CONVERSATIONAL_EXPERIENCE.md](CONVERSATIONAL_EXPERIENCE.md).
+
 Existe la aventura escrita francesa de cafetería, con decisiones, ocho objetivos, variantes, progreso local, entrenadores regionales y Roast Me independiente. Existen referencias humorísticas compartidas y validación escrita acotada. Hay pruebas automatizadas y recorridos web verificados; teclado Android nativo y Safari/iOS siguen pendientes según el registro técnico.
 
-Audio, reconocimiento oral, destinos navegables, aventura inglesa, diario, pasaporte y recompensas no se consideran implementados por figurar en la visión. Las cinco secciones describen la organización objetivo; no se interpreta que todas sus funciones estén disponibles hoy. Roast como estilo de aventuras compatibles es una extensión pendiente del modo independiente existente.
+Audio, reconocimiento oral, destinos navegables, aventura inglesa, diario, pasaporte y recompensas no se consideran implementados por figurar en la visión. Las cinco secciones describen la organización objetivo; no se interpreta que todas sus funciones estén disponibles hoy. Roast como estilo está disponible en la cafetería con consentimiento y opt-in separado; otras aventuras requieren compatibilidad editorial y técnica explícita.
 
 ## Orden de implementación
 

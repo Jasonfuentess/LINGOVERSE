@@ -1,5 +1,23 @@
 # LingoVerse — Visión de Producto V3
 
+## Enseñar antes de evaluar — LV-007-LEARN-02
+
+Para quien empieza desde cero, enseñar la intervención y una respuesta útil antes de pedir producción: significado, expresiones, audio, grupos lingüísticos, construcción y recuperación con ayuda. Conservar modos Desde cero/Pre-A1, Principiante/A1 y Autónomo por idioma como preferencias pedagógicas, nunca certificaciones. Diferenciar objetivos practicados con ayuda y resueltos sin modelo, sin inferir dominio.
+
+Incluir guías aproximadas curadas para hispanohablantes con original principal, traducción, audio del idioma y notas para sonidos sin equivalencia española. No generar aproximaciones por ortografía ni usarlas como entrada o criterio de evaluación. Práctica oral, transcripción y confirmación educativa deben estar separadas para que un fallo técnico no bloquee la historia ni cause castigo/roast. Priorizar QA con principiantes reales sobre expansión a Live. La implementación LEARN-02 sigue pendiente de aceptación manual; consultar su informe de QA.
+
+## Actualización de producto — Roast Me Live (requisito futuro, 31-oct-2026)
+
+Registrar un modo conversacional hablado, voluntario y explícitamente adulto. **No implementar durante LV-007-LEARN-01:** primero consolidar enseñanza oral para principiantes y fiabilidad/revisión del reconocimiento. La identidad visual LV-007-UI-01 es positiva para el usuario y debe conservarse.
+
+Roast Me Live debe tener personalidad latinoamericana atrevida, provocadora, grosera y cómica: puteadas auténticas por región, exageración, sarcasmo, memes y burlas creativas. El modo extremo no se rebaja artificialmente a motivación con bromas ligeras. Ofrecer intensidades diferenciadas y consentimiento adulto específico para contenido fuerte, independiente de elegir práctica normal o humor amistoso.
+
+Se prevén reacciones habladas, risas y correcciones educativas por voz, con variedad editorial para no repetir los mismos insultos. Primera experiencia por turnos; evaluar después conversación más continua y baja latencia, sin prometer viabilidad técnica actual. Risas/expresiones vocales requieren recursos reproducibles, no simularlos con una etiqueta o con puntuaciones inventadas.
+
+Cada roast debe basarse en el contexto y en un error identificado con suficiente certeza. Una transcripción incorrecta o incierta no demuestra mala pronunciación. La reacción debe terminar enseñando la expresión correcta y permitiendo practicarla. Evitar ataques a características sensibles, amenazas y humillación personal ajena a la práctica. Poder reducir intensidad, desactivar y revocar inmediatamente, incluida la reproducción pendiente. Mantener la experiencia educativa normal separada y plenamente disponible sin este humor.
+
+No hay implementación de Live, IA conversacional remota, acentos garantizados ni nuevas capacidades acústicas por registrar este requisito.
+
 **Estado:** Dirección de producto acordada. Pendiente de implementación y validación técnica.
 
 ## 1. Concepto principal

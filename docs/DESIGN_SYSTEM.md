@@ -1,4 +1,24 @@
-# Diseño · LV-001
+# Diseño · LingoVerse
+
+## Sistema vigente · LV-007-UI-01
+
+LEARN-02 conserva colores, arte, tipografía y navegación. Dentro de cada turno incorpora modelo anticipado desde cero y panel progresivo de audio, aproximación revisada, grupos, construcción y práctica local. A1 y Autónomo pueden abrirlo a demanda; no son diez pantallas. La ayuda usada queda registrada aunque se cierre. Roast consentido es visible en ambos idiomas; reiniciar sigue textual y confirmado. Ver [QA pedagógico y móvil pendiente](LV-007-LEARN-02-QA.md).
+
+LV-007-LEARN-01 conserva esta identidad, valorada positivamente por el usuario. Añade preparación educativa dentro de dos turnos existentes, selector desplegable de apoyo, audio normal/lento y revisión de transcripción. La acción preparada es «Responder al personaje»; reiniciar queda como acción textual confirmada. No cambia arte/paleta ni realiza otro rediseño. Ver [guía de QA pedagógico](LV-007-LEARN-01-QA.md).
+
+La especificación actual está en [LV-007-UI-01-DESIGN.md](LV-007-UI-01-DESIGN.md): dirección editorial de viajes, porcelana fría/tinta azul/jade/ámbar, arte pictórico local coherente, portadas de destinos, retratos y conversación compacta. Mantiene feedback y voz ligados a estados reales, acceso a cinco secciones y datos persistidos existentes. La portada se adapta a dos columnas en escritorio; las colecciones usan columnas flexibles y se apilan en móvil. La escena conversacional se limita a120 px; portada móvil200 px y escritorio420 px.
+
+La validación visual en plataforma sigue pendiente: Chrome no llegó a cargar en este entorno. Ver [guía de QA](LV-007-UI-01-QA.md). Las secciones siguientes son historia del sistema anterior, no la paleta/composición vigente.
+
+## Presentación conversacional · LV-005A
+
+La cafetería utiliza escena tinta con ventanas abstractas locales, avatar de inicial
+y contexto editorial existente. NPC a la izquierda sobre blanco, estudiante a la
+derecha sobre verde suave, coach con identidad regional en una única burbuja educativa.
+Ayudas desplegables de 48 px, historial bajo control del usuario, texto sin truncar
+y controles de comprobación agrupados para KeyboardScroll. Sin animaciones añadidas.
+Correcciones siempre completas y Continuar después del coach. Ver
+[CONVERSATIONAL_EXPERIENCE.md](CONVERSATIONAL_EXPERIENCE.md) para evidencia y límites.
 
 ## Feedback de aventura · LV-004A-UI-01 / UI-02
 

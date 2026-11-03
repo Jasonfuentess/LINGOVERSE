@@ -4,6 +4,7 @@ import { HumorPreferencesConflictError, HumorPreferencesRepository } from '../..
 import { deviceStorage } from '../../storage/deviceStorage';
 import { AppState, Platform } from 'react-native';
 import { disableAdult } from '../../domain/humor/preferences';
+import { voiceController } from '../voice/service';
 const repository = new HumorPreferencesRepository(deviceStorage);
 interface State { settings: HumorPreferences | null; loading: boolean; saving: boolean; error: string | null; reload: () => void; save: (settings: HumorPreferences) => Promise<void> }
 const Context = createContext<State | null>(null);
@@ -16,6 +17,7 @@ export function HumorPreferencesProvider({ children }: PropsWithChildren) {
   const adultHidden = useRef(false);
   useEffect(() => {
     const refresh = () => {
+      voiceController.restrict();
       setLoading(true);
       void repository.load().then(value => setSettings(adultHidden.current ? disableAdult(value) : value)).catch(() => { setSettings(null); setError('No pudimos comprobar el consentimiento. Reintentá la lectura.'); }).finally(() => setLoading(false));
     };
@@ -35,11 +37,13 @@ export function HumorPreferencesProvider({ children }: PropsWithChildren) {
   }, []);
   const reload = () => {
     if (busy.current) return;
+    voiceController.restrict();
     setLoading(true);
     void repository.load().then(value => { setSettings(adultHidden.current ? disableAdult(value) : value); setError(null); }).catch(() => { setSettings(null); setError('No se pudieron leer los ajustes de humor.'); }).finally(() => setLoading(false));
   };
   const save = async (next: HumorPreferences) => {
     if (busy.current) return;
+    voiceController.restrict();
     busy.current = true; setSaving(true); setError(null);
     // Restrictive changes hide adult content before storage completes, even on failure.
     if (!next.adult.enabled) { adultHidden.current = true; setSettings(next); }

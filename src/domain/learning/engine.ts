@@ -1,4 +1,4 @@
-import type { Evaluation, Exercise, LearnerAnswer, Lesson, MissionProgress, VariantSelector } from './models';
+import type { AnswerSupport, Evaluation, Exercise, LearnerAnswer, Lesson, MissionProgress, VariantSelector } from './models';
 import { validateLesson } from './validation';
 import { validateWritten } from './written';
 
@@ -34,31 +34,34 @@ export function evaluateAnswer(exercise: Exercise, answer: LearnerAnswer): Evalu
   validAnswer(answer);
   if (exercise.kind === 'text' && exercise.writtenRules && answer.kind === 'text') {
     const result = validateWritten(exercise, answer.text);
-    return { correct: result.correct, explanation: result.explanation, correction: exercise.correction, reply: result.correct ? exercise.reply : '', next: result.correct ? exercise.next : null, ...(result.issue ? { writtenIssue: result.issue } : {}) };
+    return { correct: result.correct, explanation: result.explanation, correction: exercise.correction, reply: result.correct ? exercise.reply : '', next: result.correct ? exercise.next : null, ...(result.issue ? { writtenIssue: result.issue } : {}), ...(result.spokenExplanation ? { spokenExplanation: result.spokenExplanation } : {}) };
   }
   let correct = false;
   let explanation = exercise.explanation;
+  let spokenExplanation: string | undefined;
   let reply = '';
   let next: string | null = null;
   if (exercise.kind === 'choice' && answer.kind === 'choice') {
     const choice = exercise.choices.find(item => item.id === answer.choiceId);
     correct = choice?.correct ?? false;
     explanation = choice?.explanation ?? 'Elegí una de las respuestas de esta escena.';
+    spokenExplanation = choice?.spokenExplanation;
     if (correct && choice) { reply = choice.reply; next = choice.next; }
   } else if (exercise.kind === 'text' && answer.kind === 'text') {
     correct = exercise.accepted.some(value => normalizeAnswer(value) === normalizeAnswer(answer.text));
     if (correct) { reply = exercise.reply; next = exercise.next; }
     else explanation = 'Probá una de las expresiones enseñadas. Revisá las palabras y los acentos; se aceptan mayúsculas y puntuación diferentes.';
   } else explanation = 'El formato de respuesta no corresponde a este ejercicio.';
-  return { correct, explanation, correction: exercise.correction, reply, next };
+  return { correct, explanation, correction: exercise.correction, reply, next, ...(spokenExplanation ? { spokenExplanation } : {}) };
 }
-export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: LearnerAnswer): MissionProgress {
+export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: LearnerAnswer, support?: AnswerSupport): MissionProgress {
+  if (support !== undefined && support !== 'assisted' && support !== 'independent') throw Error('Evidencia de ayuda inválida');
   const exercise = currentExercise(lesson, state);
   if (state.feedback?.correct) throw Error('Leé la respuesta y continuá antes de responder otra vez');
   if (state.events.length >= 1024) throw Error('Se alcanzó el límite de intentos de este recorrido. Reiniciá para practicar de nuevo.');
   const feedback = evaluateAnswer(exercise, answer);
   if (exercise.kind === 'text' && exercise.writtenRules && answer.kind === 'text') answer = { kind: 'text', text: validateWritten(exercise, answer.text).retained };
-  return { ...state, feedback, events: [...state.events, { type: 'answer', nodeId: exercise.id, answer }] };
+  return { ...state, feedback, events: [...state.events, { type: 'answer', nodeId: exercise.id, answer, ...(support ? { support } : {}) }] };
 }
 export function continueMission(lesson: Lesson, state: MissionProgress): MissionProgress {
   const exercise = currentExercise(lesson, state);
@@ -83,7 +86,7 @@ export function restoreProgress(lesson: Lesson, value: unknown): MissionProgress
     const event = value as Record<string, unknown>;
     if (event.type === 'answer') {
       if (event.nodeId !== state.nodeId) throw Error('Historial fuera de orden');
-      state = submitAnswer(lesson, state, event.answer as LearnerAnswer);
+      state = submitAnswer(lesson, state, event.answer as LearnerAnswer, event.support as AnswerSupport | undefined);
     } else if (event.type === 'continue') state = continueMission(lesson, state);
     else throw Error('Evento desconocido');
   }

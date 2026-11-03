@@ -48,11 +48,11 @@ export function KeyboardScroll({ children, contentContainerStyle }: PropsWithChi
     </View>
   </KeyboardAvoidingView>;
 }
-export function KeyboardAnswerGroup({ children }: PropsWithChildren) {
+export function KeyboardAnswerGroup({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
   const ref = useRef<View>(null);
   const focus = useContext(FocusedGroup);
   useEffect(() => () => focus(null), [focus]);
-  return <View ref={ref} style={{ gap: 20 }}>
+  return <View ref={ref} style={{ gap: compact ? 12 : 20 }}>
     <AnswerFocus.Provider value={() => focus(ref.current)}>{children}</AnswerFocus.Provider>
   </View>;
 }

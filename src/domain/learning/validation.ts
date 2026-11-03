@@ -18,7 +18,7 @@ function next(value: unknown) { if (value !== null) identifier(value); }
 
 export function validateLesson(value: unknown): Lesson {
   const lesson = record(value);
-  if (lesson.schemaVersion !== 1 || !Number.isSafeInteger(lesson.version) || (lesson.version as number) < 1 || lesson.language !== 'fr' || lesson.level !== 'A1') throw Error('Versión o idioma de lección no admitido');
+  if (lesson.schemaVersion !== 1 || !Number.isSafeInteger(lesson.version) || (lesson.version as number) < 1 || (lesson.language !== 'fr' && lesson.language !== 'en') || lesson.level !== 'A1') throw Error('Versión o idioma de lección no admitido');
   identifier(lesson.id); text(lesson.title);
   list(lesson.objectives); list(lesson.variants);
   lesson.objectives.forEach(identifier);
@@ -42,7 +42,11 @@ export function validateLesson(value: unknown): Lesson {
         let correct = 0;
         for (const rawOption of exercise.choices) {
           const option = record(rawOption);
-          identifier(option.id); text(option.label); text(option.explanation); next(option.next);
+          identifier(option.id); text(option.label); text(option.explanation); if (option.spokenExplanation !== undefined) text(option.spokenExplanation); next(option.next);
+          if (option.spokenAlternatives !== undefined) {
+            list(option.spokenAlternatives);
+            option.spokenAlternatives.forEach(text);
+          }
           if (typeof option.correct !== 'boolean' || typeof option.reply !== 'string' || optionIds.has(option.id)) throw Error('Opción inválida');
           if (!option.correct && option.next !== null) throw Error('Un error no debe avanzar');
           optionIds.add(option.id);
@@ -53,11 +57,27 @@ export function validateLesson(value: unknown): Lesson {
         if (exercise.writtenRules !== undefined) {
           if (!Array.isArray(exercise.writtenRules) || exercise.writtenRules.length > 100) throw Error('Reglas escritas inválidas');
           for (const rawRule of exercise.writtenRules) {
-            const rule = record(rawRule); text(rule.input); text(rule.explanation);
+            const rule = record(rawRule); text(rule.input); text(rule.explanation); if (rule.spokenExplanation !== undefined) text(rule.spokenExplanation);
             if (!['spelling', 'vocabulary', 'structure', 'unknown'].includes(String(rule.issue))) throw Error('Diagnóstico desconocido');
           }
         }
         list(exercise.accepted); exercise.accepted.forEach(text); next(exercise.next); text(exercise.reply);
+        for (const field of ['unknownExplanation', 'spokenExplanation', 'unknownSpokenExplanation']) {
+          if (exercise[field] !== undefined) text(exercise[field]);
+        }
+        if (exercise.acceptedFeedback !== undefined) {
+          if (!Array.isArray(exercise.acceptedFeedback) || exercise.acceptedFeedback.length > 100) throw Error('Equivalencias editoriales inválidas');
+          const normalized = (s: string) => s.normalize('NFC').toLocaleLowerCase('fr').replace(/[’‘]/g, "'").replace(/^[¡¿\s]+|[.!?\s]+$/g, '').replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
+          const accepted = new Set((exercise.accepted as string[]).map(normalized));
+          const recorded = new Set<string>();
+          for (const rawFeedback of exercise.acceptedFeedback) {
+            const entry = record(rawFeedback); text(entry.input); text(entry.explanation);
+            if (entry.spokenExplanation !== undefined) text(entry.spokenExplanation);
+            const key = normalized(entry.input as string);
+            if (!accepted.has(key) || recorded.has(key)) throw Error('Equivalencia no enseñada o repetida');
+            recorded.add(key);
+          }
+        }
       } else throw Error('Tipo de ejercicio no admitido');
     }
     const exercises = variant.exercises as Exercise[];

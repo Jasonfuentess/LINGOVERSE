@@ -1,7 +1,7 @@
 import type { CoachLocale } from '../domain/preferences';
 import type { EditorialReaction, HumorCategory } from '../domain/humor/models';
 import { roastTeaching } from './roastTeaching';
-import { referenceReactions } from './humorReferences';
+import { humorReferences, referenceReactions } from './humorReferences';
 
 // Whole editorial lines, never assembled from interchangeable insult fragments.
 const texts: Record<CoachLocale, Record<HumorCategory, string[]>> = {
@@ -102,4 +102,16 @@ for (const [id, text] of Object.entries(revisions)) {
   if (!original) throw Error(`Falta la reacción editorial ${id}`);
   original.retired = true;
   roastLibrary.push({ ...original, id: `${id}:revision2`, text, retired: false });
+}
+
+// Reuse existing lines whose actual text fits London; no new jokes or copied engine.
+const englishCompatible = new Set([
+  'es-SV:general:1','es-SV:general:3','es-SV:error:1','es-SV:retry:1:revision2','es-SV:retry:2','es-SV:recurring:2','es-SV:recurring:3','es-SV:recovery:1','es-SV:recovery:2','es-SV:recovery:3','es-SV:correct:2','es-SV:correct:3','es-SV:progress:3','es-SV:celebration:3',
+  'es-MX:general:1','es-MX:general:3','es-MX:error:3:revision2','es-MX:retry:1','es-MX:retry:2','es-MX:retry:3','es-MX:recurring:1','es-MX:recurring:2','es-MX:recurring:3','es-MX:recovery:1','es-MX:recovery:2','es-MX:recovery:3','es-MX:correct:1','es-MX:correct:2','es-MX:correct:3:revision2','es-MX:progress:1:revision2','es-MX:progress:2','es-MX:progress:3','es-MX:celebration:2','es-MX:celebration:3',
+  'es-CO:general:2','es-CO:error:1','es-CO:error:3','es-CO:retry:1','es-CO:retry:2:revision2','es-CO:retry:3','es-CO:recurring:1','es-CO:recurring:2','es-CO:recurring:3','es-CO:recovery:1','es-CO:recovery:2','es-CO:recovery:3','es-CO:correct:1','es-CO:correct:3:revision2','es-CO:progress:1','es-CO:celebration:3:revision2',
+  'es-AR:general:1','es-AR:general:3:revision2','es-AR:error:2','es-AR:retry:2','es-AR:retry:3','es-AR:recurring:1:revision2','es-AR:recurring:2','es-AR:recovery:1','es-AR:recovery:2','es-AR:recovery:3','es-AR:correct:1','es-AR:correct:2','es-AR:progress:1','es-AR:progress:3','es-AR:celebration:3',
+].map(id=>`roast-v1:${id}`));
+for(const item of roastLibrary) {
+  const reference=item.referenceId?humorReferences.find(source=>source.id===item.referenceId):null;
+  item.learningLanguages=reference?[reference.language==='en'?'en':'fr']:englishCompatible.has(item.id)?['fr','en']:['fr'];
 }

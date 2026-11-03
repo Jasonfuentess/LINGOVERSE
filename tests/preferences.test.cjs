@@ -11,6 +11,22 @@ function memory() {
 test('defaults are guest, Spanish interface, no audio or adult consent', () => {
   assert.deepEqual(defaults(), { version: 1, mode: 'guest', learningLanguage: 'en', interfaceLanguage: 'es', coachLocale: 'es-SV', voiceProvider: 'none', explicitHumorEnabled: false, onboardingCompleted: false });
 });
+
+test('system voice is explicit and persisted without changing legacy defaults or adult consent', async () => {
+  const prefs = changePreferences(defaults(), { voiceProvider: 'system' });
+  assert.equal(prefs.voiceProvider, 'system');
+  assert.equal(prefs.explicitHumorEnabled, false);
+  const repo = new PreferencesRepository(memory()); await repo.save(prefs);
+  assert.equal((await repo.load()).preferences.voiceProvider, 'system');
+  assert.equal(changePreferences(prefs, { voiceProvider: 'none' }).voiceProvider, 'none');
+});
+
+test('network speech preference is explicit, validated and survives storage', () => {
+  assert.equal(defaults().allowNetworkVoices, undefined);
+  const enabled = changePreferences(defaults(), { allowNetworkVoices: true });
+  assert.equal(decodePreferences(JSON.stringify(enabled)).allowNetworkVoices, true);
+  assert.throws(() => decodePreferences(JSON.stringify({ ...defaults(), allowNetworkVoices: 'yes' })));
+});
 test('every language and coach can be changed without mutating prior state', () => {
   const previous = defaults();
   for (const learningLanguage of ['en', 'fr']) for (const coachLocale of ['es-SV', 'es-MX', 'es-CO', 'es-AR']) {

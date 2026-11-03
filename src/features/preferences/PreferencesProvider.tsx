@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { changePreferences, type Preferences, type PreferencesChange } from '../../domain/preferences';
 import { PreferencesRepository } from '../../storage/preferencesRepository';
 import { deviceStorage } from '../../storage/deviceStorage';
+import { voiceController } from '../voice/service';
 
 const repository = new PreferencesRepository(deviceStorage);
 interface State {
@@ -40,12 +41,14 @@ export function PreferencesProvider({ children }: PropsWithChildren) {
     return () => { active = false; };
   }, []);
   const reload = async () => {
+    voiceController.restrict();
     setLoading(true);
     setError(null);
     await read();
   };
   const save = async (change: PreferencesChange) => {
     if (!preferences || busy.current) return false;
+    voiceController.restrict();
     busy.current = true;
     setSaving(true);
     setError(null);

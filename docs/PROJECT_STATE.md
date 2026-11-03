@@ -1,4 +1,236 @@
+# LV-008-LEARN-03 — Pronunciation Coach (02-nov-2026)
+
+**Estado: APROBADA.** **Validación confirmada por el usuario:** 9/9 pruebas manuales en Chrome. Cubren audio, pronunciación, micrófono, ayudas y experiencia móvil. Las ejecutó el usuario, no Claude. La guía archivada tiene 10 pasos; no se atribuye una correspondencia paso a paso. No volver a implementar ni probar esta etapa.
+
+**Sigue pendiente** (fuera de lo validado): revisión docente humana de las 35 guías, más Android/iOS/Safari, lector de pantalla y texto ampliado.
+
+Estado técnico previo a la validación: implementación con pruebas automatizadas y recorridos en Chrome real headless aprobados. Línea base reportada por el usuario: 11/11 pruebas manuales educativas en Chrome (no ejecutadas por Claude). Línea base verificada: 193/193.
+
+**Qué se hizo:**
+- Contrato tipado de guías con id, locale, propósito, unidades con significado, consejos de sonido reutilizables, metadatos de revisión y `usedIn`.
+- Revisión de las 11 guías: `h` → `j` en inglés y encadenamiento «ü namí», además de las consonantes mudas omitidas.
+- 24 guías nuevas: ahora el modelo preferido de **todos** los turnos de respuesta escrita de las tres aventuras tiene guía; antes, 1 de 13.
+- Componente `PronunciationCoach` con divulgación progresiva: aproximación visible en Desde cero y bajo demanda en A1/Autónomo; partes con audio normal y lento; sonidos difíciles; «Volver a la conversación».
+- Se reutilizan `StudyAudio`, `SpeechButton` y `VoiceController`.
+- Sin cambios en evaluación, contenido de misiones, persistencia ni reconocimiento de voz.
+
+**Defecto encontrado y corregido en Chrome:** desbordamiento horizontal a 320 px en los botones de audio lento por fragmento.
+
+**Archivos:**
+- Nuevos: `src/features/learning/PronunciationCoach.tsx`, `tests/pronunciation-coach.test.cjs`, `docs/LV-008-LEARN-03-PRONUNCIATION.md`, `tasks/LV-008-LEARN-03.md`.
+- Modificados: `src/content/pronunciation.ts`, `src/content/rescue.ts`, `src/features/learning/LearningRescue.tsx`, `src/features/voice/VoiceControls.tsx` (solo textos de `StudyAudio` sin segmentos), `scripts/check-premium.mjs`.
+- Respaldo verificado (192 archivos, SHA-256) en `.backups/LV-008-LEARN-03-20261102-200849`.
+
+**Verificación:** 204/204 (193 anteriores + 11 nuevas), ambos typechecks, lint, export web y `check-premium.mjs` normal/`--beginner`/`--rescue` PASS. Logs `lv008-learn03-*.log`. Detalle, revisión editorial y QA manual en [LV-008-LEARN-03-PRONUNCIATION.md](LV-008-LEARN-03-PRONUNCIATION.md).
+
+# LV-008-FIX-01 — Recuperación y versión local de prueba (02-nov-2026)
+
+**Estado:** diagnóstico completado. App ejecutable y recorrida en **Chrome 156 real (headless, por CDP)** por primera vez desde UI-01. Esta vez no hubo bloqueo GPU/CDP. Falta la validación manual del usuario con audio y micrófono físicos.
+
+**Diagnóstico:** la carpeta definitiva contiene la versión más avanzada (LV-007-LEARN-02). Sigue **sin `.git`**: no se ejecutó ninguna operación Git y no se consultó la carpeta antigua. Las dependencias ya estaban instaladas y no se agregó ni cambió ninguna. Línea base sin cambios: **193/193** pruebas, ambos typechecks, lint y export web PASS.
+
+**Recorridos en Chrome real:** `check-premium.mjs` normal/`--beginner`/`--rescue` PASS. Cubren onboarding, las tres aventuras completas, reanudación tras recargar, cancelación de reinicio, preparación guiada por fases (persistida por idioma), guía «ui, zhé rãdevú isí», rescate sin envío, navegación de cinco pestañas, consentimiento Roast deshabilitado sin casillas y ausencia de desbordamiento en 320/390/1280. Un recorrido ad hoc adicional confirmó que el cambio francés→inglés→francés conserva preferencias y progreso. No hubo errores de ejecución ni de consola. Ninguno de estos recorridos reproduce audio ni usa micrófono real.
+
+**Defecto corregido:** en un teléfono de 390×844, la primera pantalla de un turno no mostraba la frase del personaje (el encabezado estaba en y≈790). «Volver a Explorar» ahora comparte fila con los controles de audio, y el acceso «Configurar estilo Roast Me (adultos)» sin consentimiento pasa debajo de la conversación **solo durante un turno activo** (en la portada y el cierre sigue arriba). El encabezado queda en y≈668 y la frase y la traducción son visibles sin desplazarse. Consentimiento, estilo activo y revocación no cambian. Se añadió la aserción correspondiente a `check-premium.mjs`.
+
+**Archivos:** `src/features/learning/MissionScreen.tsx`, `src/features/voice/VoiceControls.tsx` (prop opcional `leading`), `scripts/check-premium.mjs`. Respaldo previo en `.backups/LV-008-FIX-01-20261102-194001/source.zip` con `SHA256SUMS` (verificado). Logs `lv008-fix01-*.log`.
+
+**Verificación final:** 193/193, typecheck:core, typecheck, lint, export:web y los tres modos de `check-premium.mjs` PASS.
+
+**Pendiente / limitaciones:** `scripts/check-web.mjs` (verificador anterior a UI-01) busca textos que ya no existen («Hacelo tuyo.»). Está obsoleto y no indica un fallo de la app; usar `check-premium.mjs`. Las ocho pruebas históricas de LV-007A siguen ausentes (`tests/lv007a-continuity.test.cjs` y 3 casos de `mission-presentation`). El código que verificaban existe; recuperarlas requiere una fuente autorizada. Falta QA de audio/micrófono reales, Android/iOS/Safari y revisión docente de las guías de pronunciación.
+
+# LV-007-LEARN-02 — Enseñar antes de evaluar (31-oct-2026)
+
+**Estado:** rescate implementado; **validación manual con principiante real NO aprobada todavía**. El usuario reportó el fallo de LEARN-01 en rendez-vous/confirm. Se preserva UI-01 y no se confunde aceptación visual positiva con aceptación pedagógica.
+
+Diagnóstico: LEARN-01 excluía rendez-vous y texto, preparando solo dos saludos. Ahora todos los turnos de las tres aventuras tienen recuperación con modelos editoriales ya aceptados, significado/propósito, vocabulario y escucha antes de fallar. Desde cero muestra apoyo anticipado; A1 y Autónomo ofrecen ayuda opcional. Preferencias por idioma y checkpoints previos conservados. Construcción opcional, práctica oral local y confirmación manual del modelo no envían ni califican; preparar llena borrador/opción y Responder sigue explícito. No hay dependencia del reconocimiento para continuar.
+
+Catálogo de **11 guías aproximadas** original/traducción/grafía/IPA/notas/fuentes, con revisión editorial independiente por IA basada en diccionarios; no revisión docente humana/acústica. Incluye S’il vous plaît → sil vu plé y Oui, j’ai rendez-vous ici → ui, zhé rãdevú isí. TTS y evaluación usan únicamente originales; no hay transliteración automática ni nota fonética. Bonjour y S’il vous plaît se escuchan completos; grupos revisados y fallback «Si suena igual» para voces sin ralentización clara. No se afirma que rate0.65 cambie perceptiblemente el audio de esta plataforma.
+
+Evidencia opcional assisted/independent en nuevos eventos, validada por replay y guardado. Resumen separa ayuda, resolución sin modelo y ausencia de registro antiguo, nunca dominio. Incertidumbre escrita excluida de nuevos errores confirmados y de Roast en aventuras. Acceso Roast comprensible en inglés/francés, consentimiento/activación separados, subconjunto regional existente compatible con Londres; sin memes nuevos, motor duplicado ni Live. El Roast independiente conserva referencias textuales previas en su contexto propio, sin atribuir fonética.
+
+**Protección/pruebas:** respaldo190 archivos verificado por SHA-256 `.backups/LV-007-LEARN-02-20261031-020719`; cero originales ausentes y quince archivos protegidos idénticos, incluyendo todos los contenidos de misión/versiones, arte/tokens y dependencias. Baseline181/181 → **193/193 (12 nuevos)**. Typechecks core/general, lint sin advertencias y export web PASS. Revisión independiente y regresiones de cambio de modo A1 y selección del modelo preferido corregidas. Chrome falla antes de cargar por GPU/timeout CDP; sin capturas, escucha real, lector/móvil ni QA nativo.
+
+Diagnóstico/plan: [LV-007-LEARN-02-DESIGN.md](LV-007-LEARN-02-DESIGN.md). Auditoría bilingüe, fuentes, archivos/resultados/limitaciones y **18 pasos manuales**: [LV-007-LEARN-02-QA.md](LV-007-LEARN-02-QA.md). Verificador `scripts/check-premium.mjs --rescue`; logs `lv007-learn02-*.log`. Contenidos de misión idénticos: Londres nuevo sigue v4, antiguas v1/v2/v3 continúan sin reinterpretación. Sin Git/commit/push/merge/deploy, carpeta antigua, nuevas aventuras, IA abierta, servicios o Live.
+
+Prioridad siguiente: prueba real del aprendizaje y perceptiva de audio, disposición/accesibilidad y revisión docente de guías. LV-007B/Live requieren trabajo posterior. Evidencia histórica debajo, incluidas10/10 LV-006B reportadas por el usuario y las ocho pruebas históricas ausentes que no se declararon recuperadas.
+
+# LV-007-LEARN-01 — Preparación para principiantes implementada (31-oct-2026)
+
+**Estado:** implementación y verificación automatizada finalizadas; **validación con principiante real y audio/micrófono físico pendientes**. Se conserva la identidad visual LV-007-UI-01 valorada positivamente por el usuario; esa valoración no se registra como ejecución de su checklist por Codex.
+
+Guía en dos escenas existentes (café/bonjour y Londres/greet): modelo, significado, partes, repetición completa, respuesta y transferencia breve opcional. Selección de ayuda desde cero/pre-A1 o con bases/A1 orientativo, modo guiado/autónomo y checkpoint por idioma, guardados aparte en `lingoverse.learning-support.v1`. No implica nivel medido, nota fonética ni progreso de misión por escuchar o avanzar preparación. Audio lento solicitado al mismo motor, sujeto a voz/dispositivo. Captura, incertidumbre, permisos y edición de transcripción no envían respuestas: confirmar prepara borrador/opción, enviar sigue siendo explícito.
+
+Londres v4 corrige respuesta a oferta de ayuda y agrega alternativas exactas. Archivo v3 conservado byte por byte desde la copia actual y registrado junto a v1/v2; partidas viejas conservan contenido/feedback. Café, rendez-vous, Roast, arte/paleta, claves y esquema de misiones intactos. Reinicio sigue confirmado, ahora discreto. Sin dependencias nuevas, Git, commits, push, merge, deploy ni uso de la carpeta antigua.
+
+**Protección/evidencia:** respaldo de177 archivos verificado por SHA-256 en `.backups/LV-007-LEARN-01-20261031-010218`. Baseline166/166; final **181/181 (15 nuevas)**, ambos typechecks PASS, lint PASS sin advertencias, export web PASS. Las ocho pruebas históricas ausentes siguen ausentes: el nuevo total no supone recuperación de174. Se contrastó el runner y las referencias originales; ver diagnóstico. Revisión independiente de código y corrección probada de feedback de transferencia. Chrome falló antes de cargar por GPU/timeout CDP; sin capturas ni QA nativo, físico o con estudiantes reales.
+
+Diagnóstico/plan: [LV-007-LEARN-01-DESIGN.md](LV-007-LEARN-01-DESIGN.md). Cambios, archivos, comandos, resultados, límites del reconocimiento y **18 pasos manuales**: [LV-007-LEARN-01-QA.md](LV-007-LEARN-01-QA.md). Logs `lv007-learn01-*.log`; verificador ampliado `scripts/check-premium.mjs --beginner` pendiente de ejecución efectiva en Chrome. Las10/10 de LV-006B continúan como validación reportada por el usuario.
+
+Roast Me Live queda **solo como requisito futuro** en PRODUCT_VISION/ROADMAP: humor adulto extremo regional auténtico, voz/risas reales, variedad, enseñanza al final, consentimiento fuerte específico y revocación inmediata. No se implementó Live ni LV-007B; priorizar QA de principiantes y fiabilidad/revisión del reconocimiento antes de esas fases.
+
+Los apartados siguientes conservan evidencia histórica.
+
+# LV-007-UI-01 — Rediseño implementado; aceptación visual pendiente (31-oct-2026)
+
+Implementados Inicio, Explorar, composición de aventura, retratos NPC, entrenadores, estados de voz/micrófono/feedback, navegación de cinco secciones, Practicar con accesos a aventuras y Trabajo con disponibilidad futura explícita. Perfil usa controles reales de voz y selección visual de entrenador; Roast Me conserva consentimiento/revocación con presentación propia. Paleta tinta/jade/ámbar y dos atlas originales locales. Se preservan contenidos, motores, persistencia y continuidad LV-007A; no hay cambios de dependencias ni implementación de LV-007B.
+
+**Evidencia:** 166/166 tests PASS tras corregir una comprobación de composición; ambos typechecks, lint sin advertencias y exportación web PASS. Revisión independiente de código y correcciones realizadas. Chrome no llegó a cargar: error GPU/timeout CDP `Page.enable` en intentos antes/después. **No hay capturas reales ni validación visual/voz/micrófono de esta entrega**, ni QA Android/iOS/Safari. No confundir imágenes generadas con capturas del producto.
+
+Especificación y auditoría: [LV-007-UI-01-DESIGN.md](LV-007-UI-01-DESIGN.md). Archivos, pruebas, errores corregidos, recursos/licencias y **guía manual de18 pasos**: [LV-007-UI-01-QA.md](LV-007-UI-01-QA.md). Verificador preparado `scripts/check-premium.mjs`, pendiente de ejecución efectiva en Chrome normal. Validar el rediseño antes de iniciar LV-007B. Git sigue sin inicializar, sin commits/push/merge/deploy ni uso de la copia antigua.
+
+# Verificación local y fuente principal (31-oct-2026)
+
+- Fuente definitiva confirmada por el usuario: `D:\Documents\Jason\LingoVerse\LingoVerse Main\LingoVerse-Codex-Inicio`. Acceso de lectura y escritura autorizado en esta sesión. La carpeta anterior no se consultó ni se utilizó para copiar archivos.
+- **Validación reportada por el usuario:** completó personalmente **10/10 pruebas manuales de LV-006B en Chrome**. No son pruebas ejecutadas por Codex. El checklist archivado tiene 11 puntos; no se atribuye una correspondencia individual ni aceptación de otras plataformas o de LV-007A.
+- Verificación de Codex sobre esta copia, antes del rediseño: `npm.cmd test` **166/166 PASS**; `npm.cmd run typecheck:core`, `npm.cmd run typecheck`, `npm.cmd run lint` y `npm.cmd run export:web` **PASS**. Logs locales: `lv007-ui01-baseline-{tests,types,lint,export}.log`; exportación local en `dist/`, sin publicación.
+- Discrepancia frente al registro histórico de 174 tests: faltan `tests/lv007a-continuity.test.cjs` (5 casos documentados) y los 3 casos LV-007A descritos para `tests/mission-presentation.test.cjs`. También faltan `tasks/LV-007A.md` y `docs/LV-007A-CONVERSATION-FLOW.md`. El código de `ConversationBridge`, `latestConversationBeat` y reproducción del modelo verificado sí está presente. No se sustituyeron archivos para resolver esta diferencia.
+- Se comprobó la presencia de contenido histórico de café v1/v2, Londres v1/v2 y la aventura rendez-vous. Se conserva la implementación existente de LV-006B y LV-007A.
+- `git status --short` devuelve «not a git repository». No se ejecutó init, clone, reset, merge, commit, push ni ninguna operación Git de escritura. La recuperación de control de versiones queda por definir con el usuario.
+- **LV-007-UI-01:** inicialmente no estaba su tarea/prompt; el usuario proporcionó el alcance completo durante esta sesión y autorizó definir el sistema visual e implementarlo. Ver entrega actual arriba. LV-007B queda fuera de alcance.
+
+Los apartados siguientes conservan los resultados históricos de las entregas anteriores; la verificación local y confirmación manual de arriba prevalecen donde difieren.
+
+# LV-006B — Segunda aventura de francés «Un rendez-vous à Paris» (31-oct-2026)
+
+**Corte actual:** implementada sobre **copia del proyecto completo LV-007A** previamente entregado. Línea base `npm test`: **160/160** antes de cambios. Resultado final: **174/174** (14 nuevas), `npm run typecheck:core` OK, `npm run typecheck` OK, `npm run lint` OK sin advertencias, `npm run export:web` OK. **QA manual de LV-006B en Chrome pendiente**. Intento de Chromium automatizado **no aprobado** debido al bloqueo del entorno a `127.0.0.1` antes de cargar la app. El usuario aceptó LV-006A-REV-01 en Chrome previamente, pero **no** ha validado LV-007A ni LV-006B manualmente. Android/iOS nativos tampoco verificados.
+
+**Implementación:** nueva lección francesa A1 `fr-a1-paris-rendezvous` **v1**, totalmente separada de `fr-a1-paris-cafe` y de `en-a1-london-lost`, con dos historias («Un message au jardin» y «La carte postale»), dos bifurcaciones genuinas por historia y diez objetivos en cada recorrido. Árboles → Adrien / flores → Nadia en Jardín de Luxemburgo; puente → Hugo / bouquinistes → Zoé junto al Sena. Cambian interlocutores, escenas, instrucciones, recorrido y cierre. Los finales reutilizan las expresiones aprendidas. Las reglas escritas locales usan alternativas semánticas editadas, diagnósticos específicos de errores conocidos y estado **unknown** para texto que no puede confirmarse. No hay evaluación ilimitada de lenguaje natural ni de pronunciación.
+
+**Arquitectura:** nueva ruta Expo `/rendezvous`; contexto React `RendezvousContext` y `MissionRepository` independientes de café/Londres; almacenamiento `lingoverse.mission.fr-a1-paris-rendezvous.v1` sin migraciones de los otros registros. `MissionScreen`, `CafeScene`, `ChapterReview`, `CoachReaction` y `ExerciseView` reciben un identificador de aventura opcional con defaults compatibles. La reacción del entrenador usa el estado de **esta** misión, no el del café. Voz NPC/modelo y micrófono existentes con `fr-FR`, entrenador en español regional y teclado de reserva. Arte original local por primitivas RN con jardín/río (ningún material licenciado externo), nombres y retratos propios sin tocar los activos aprobados. Sin paquetes, APIs de pago, cambios Git, nuevos modelos de persistencia ni mecánicas de recompensa.
+
+**Pruebas añadidas:** once casos de contenido, rutas, equivalencias, negativos, correcciones, aislamiento/reanudación, voces y no filtración; tres de render TSX de voz/coach/repaso. Pasan todas junto a las 160 previas. **No** se ejecutó QA real con micrófono ni reproducción física de voces. Consultar [LV-006B-ADVENTURE-AND-QA.md](LV-006B-ADVENTURE-AND-QA.md), [LV-006B.md](../tasks/LV-006B.md) y [HANDOFF_TO_CODEX.md](HANDOFF_TO_CODEX.md).
+
+---
+
+# LV-007A — Continuidad entre escenas (31-oct-2026)
+
+**Estado:** implementación incremental finalizada y validada automáticamente (**160/160 tests**, ambos typechecks, ESLint y exportación web aprobados). **QA manual de LV-007A en Chrome pendiente.** El usuario confirmó que la corrección anterior **LV-006A-REV-01 funciona** en su Chrome tras incorporar `london.v1.ts`; no se atribuye ese resultado a la nueva interfaz ni se inventan nuevos tests manuales. Android/iOS nativos siguen sin verificar.
+
+El último intercambio completado (modelo de respuesta verificada y última intervención NPC o pregunta anterior) aparece antes del nuevo turno para preservar continuidad. Opcionalmente puede escucharse en el idioma original. Las respuestas **correctas** ya verificadas permiten «Escuchar el modelo de tu respuesta» en el idioma de la aventura, sin evaluación fonética, ni voz automática. El puente deriva de los eventos ya confirmados, nunca del grafo futuro; no cambia contenido, versiones, repositorios ni estructura de progreso. Francia/París, Londres v1/v2/v3, micrófono, fallback escrito y humor permanecen intactos. No hay nuevas dependencias. Ver [LV-007A-CONVERSATION-FLOW.md](LV-007A-CONVERSATION-FLOW.md) y [HANDOFF_TO_CODEX.md](HANDOFF_TO_CODEX.md).
+
+---
+
+# LV-006A-REV-01 — Corrección pedagógica y audio (31-oct-2026)
+
+**Estado actual:** implementación corregida de Londres **v3** con aceptación automática **152/152 pruebas**, typecheck core/general, ESLint y export web aprobados. **QA manual de esta revisión todavía no realizado.** El intento de Chromium automatizado no cargó la aplicación por bloqueo del entorno a `127.0.0.1`. El QA anterior de LV-006A tuvo 11/12 pasos ejecutados con defectos; punto 10 (alternar francés/inglés) pendiente. LV-005B-02 sí fue validada por el usuario con 9/9 pasos manuales en Chrome anteriormente.
+
+Corregidas las respuestas válidas previamente rechazadas «I need help» y «Yes, I'm new here» (incluida «yes , I'm new here»); equivalencias editoriales nuevas y rechazo de negaciones contradictorias. El mensaje desconocido ahora indica incertidumbre en vez de inventar una falta. Narrativa revisada (preguntar por destino y despedirse antes de llegar). Feedback hablado del entrenador en español sin ejemplos ingleses mezclados en el TTS; ejemplos separados con `en-GB` y francés `fr-FR`. No hay nuevas dependencias ni capacidades de pronunciación.
+
+`src/content/london.v2.ts` archiva v2 sin modificar sus ejercicios y `src/content/london.v1.ts` permanece; el proveedor permite reanudar v1/v2 y nuevas partidas inician v3 **solo tras confirmar reinicio**. Sin cambio de clave de progreso; sin migración automática. Todo se realizó sobre la copia del ZIP, sin modificar directamente la ruta Windows ni ejecutar operaciones Git de escritura. Ver diagnóstico, inventario de escenas, comandos/resultados y checklist en [LV-006A-REV-01-AUDIT.md](LV-006A-REV-01-AUDIT.md). **No atribuir al usuario aceptación posterior de voz/acento todavía pendiente.**
+
+---
+
+## LV-006A-02 — corrección incremental tras hallazgos de Chrome (30-oct-2026)
+
+El usuario informó **11/12 puntos de prueba manual ejecutados** para *Lost in London*; **pendiente el punto 10** de cambio inglés ↔ francés. No se debe interpretar la ejecución como aceptación total: capturas muestran ejemplos con etiqueta «en francés» en Londres, feedback genérico para «What is the Theatre?», conversaciones confusas y mezcla de traducción. El usuario percibió acento incorrecto al escuchar al entrenador/ejemplos.
+
+**Corrección de código:** en audio de ejemplos se emplea idioma del ejercicio (`en-GB` / `fr-FR`); las burbujas separan texto original y traducción; las frases del entrenador español siguen usando `coachLocale` (la calidad de voz nativa sigue sin verificarse). Se creó contenido London **v2** con correcciones pedagógicas *what/where* y escenas de Ben/Leo más coherentes. La **v1 se archiva exactamente en `src/content/london.v1.ts` y sigue reanudable sin pérdida**, con registro por versión en el mismo repositorio; los cambios de contenido v2 solo se muestran al empezar una partida nueva/reiniciar voluntariamente. París no se modifica.
+
+**Automatizado ejecutado:** `npm test` **140/140 OK** (5 pruebas adicionales tras 135), `npm run typecheck:core` **OK**, `npm run typecheck` **OK**, `npm run lint` **OK**, `npm run export:web` **OK**. Los tests de voz son simulados. **No** se probó micrófono/acentos reales tras el parche ni Android/iOS. El QA del usuario anterior sigue siendo evidencia de LV-006A v1, no de aceptación de v2. Ver `docs/LV-006A-02-QA-FIXES.md` y `docs/HANDOFF_TO_CODEX.md`.
+
+---
+
 # Estado del proyecto
+
+## LV-006A — primera aventura inglesa «Lost in London» (2026-10-30)
+
+**Estado:** Implementación incremental y pruebas automatizadas aprobadas; **QA manual Chrome de la nueva aventura pendiente**. La entrega se realizó sobre la copia adjunta de LV-005B-02, sin modificar la carpeta Windows del usuario ni ejecutar operaciones Git de escritura. `feature/lv-005a-conversational-adventures` se observó mediante `git status` (solo lectura); el árbol ya contenía muchas modificaciones y archivos sin seguimiento, preservados.
+
+**Confirmación de LV-005B-02:** El usuario reportó explícitamente **9/9 pruebas manuales aprobadas en Chrome de escritorio** el 30/oct/2026: inicio, voces de personajes, permiso/micrófono, transcripción editable, evaluación de respuesta hablada, error educativo, fallback escrito, cancelaciones y progreso/diseño. Se conserva también su evidencia anterior **124/124 tests automatizados** y ambos typechecks, lint y exportación web aprobados. **No** implica reconocimiento Android/iOS, evaluación de pronunciación ni QA manual inglés.
+
+Se añadió la lección **`en-a1-london-lost` v1** con dos relatos ingleses A1 originales y nueve objetivos por recorrido. `station-arrival` (Maya, King’s Cross, Blue Door Hostel ficticio) bifurca entre Nora a pie y Ben en autobús; `riverside-rain` (Ollie, South Bank, Lantern Theatre ficticio) bifurca entre Asha junto al río y Leo en el mercado. Las elecciones cambian escenarios, PNJ, indicaciones y conclusión. Trece nodos alcanzables por variante, nueve visitados en cada ruta, con respuestas escritas alternativas y opciones equivalentes; los errores conocidos muestran enseñanza contextual. No se afirma comprensión libre ilimitada.
+
+La adaptación a `en | fr` es de dominio y props de componentes compartidos, no condicionales ingleses en Learning Engine. Se reutilizan evaluación, historial/eventos, Variety Engine, controladores TTS/STT y fallback escrito. El entrenador usa el contexto del idioma activo para no filtrar reacciones francesas ni Roast a Londres. Voz NPC y micrófono solicitan `en-GB`, la transcripción sigue siendo editable y no califica pronunciación. Página `/london`, tarjetas en Inicio/Explorar, escena de Londres dibujada con RN, retratos tipográficos y repaso de escenas realmente visitadas. Progreso local por lección/versiones separado de París; las versiones francesas no se modificaron. Sin nuevas dependencias, API de pago, despliegue ni cambios Git de escritura.
+
+**Validación nueva:** `npm test` **135/135**, con 11 pruebas nuevas de Londres (9 en `tests/london.test.cjs` y 2 de integración TSX) además de los 124 iniciales; `npm run typecheck:core` **OK**; `npm run typecheck` **OK**; `npm run lint` **OK**; `npm run export:web` **OK**. Se intentó `node scripts/check-web.mjs --browser /tmp/lingoverse-chromium`: **no aprobado** por restricción externa del contenedor `127.0.0.1 is blocked`; navegador nunca cargó la app. **No se ha realizado** QA manual real para esta misión de inglés ni pruebas de micrófono/TTS inglés en dispositivo. Consultar [LONDON_ADVENTURE.md](LONDON_ADVENTURE.md) y [HANDOFF_TO_CODEX.md](HANDOFF_TO_CODEX.md).
+
+---
+
+
+## LV-005B-02 — reconocimiento de voz web incremental (registro histórico anterior a las 9 pruebas manuales)
+
+> **Actualización posterior:** el usuario confirmó **9/9 pruebas manuales de LV-005B-02 en Chrome escritorio**. Las frases «pendiente de QA» de este apartado reflejan el momento anterior a su confirmación; el corte vigente está en LV-006A al inicio.
+
+**Estado:** código implementado y compilado, **pendiente de validación manual con micrófono real**. Esta ejecución trabajó sobre la copia del ZIP enviado; no escribió en `D:\Documents\Jason\LingoVerse\LingoVerse-Codex-Inicio`. Rama leída `feature/lv-005a-conversational-adventures`; no se hicieron commit, push, merge, checkout, reset ni deploy. Se preservaron los 109 cambios/modificaciones/sin seguimiento presentes al extraer el ZIP (revisar `git status` antes de integrar en Windows).
+
+**Línea base comprobada del ZIP:** 114/114 pruebas, sin editar proyectos anteriores. LV-005B-01 ya incluía controlador de cola TTS, proveedor compartido, adaptadores web/nativos, controles reproducir/repetir/detener y `expo-speech ~57.0.3`. El usuario había confirmado manualmente en Chrome la voz de Camille en francés y Luz en español. Los documentos de estado anteriores se habían quedado en LV-005A-UI-01; las frases históricas «sin voz» no describen el código actual.
+
+**Se agregó LV-005B-02:** reconocimiento `SpeechRecognition`/`webkitSpeechRecognition` en navegadores compatibles, en contexto seguro, solo por pulsación explícita. Audio de personaje se detiene al empezar dictado y la reproducción nueva cancela dictado. Captura una frase francesa `fr-FR`, presenta texto final revisable/editable y lo traslada al borrador escrito o a una opción visible de coincidencia única; se evalúa únicamente con el botón ordinario del Learning Engine. Se conservan interfaz, entrenadores, humor, consentimiento, variante de contenido, persistencia y comportamiento sin micrófono. El navegador puede enviar audio a servidores externos; mensaje visible antes de hablar. No se guardan grabaciones por código de LingoVerse y no se evalúa pronunciación.
+
+**Validaciones en esta copia:** 10 pruebas nuevas, **124/124 tests Node OK**; `npm run typecheck:core`, `npm run typecheck`, ESLint (CLI local), `npm run export:web` OK. Web bundle local creado; ninguna publicación. `npm run lint` puede fallar por permisos del shim `.bin` después de descomprimir el ZIP en Linux, no por reglas; ejecutar el binario JS local o restaurar permisos de ejecución. El script de recorrido Chromium fue intentado pero **NO aprobado**: una política del entorno bloquea `127.0.0.1` en el navegador. Sin micrófono físico en pruebas, sin aprobación Chrome real de STT, Android/iOS o Safari. Se corrigió además la espera prematura de `document.body` en el script de QA; ese ajuste no solventa la restricción de red del navegador. Ver [SPEECH_RECOGNITION.md](SPEECH_RECOGNITION.md) y [HANDOFF_TO_CODEX.md](HANDOFF_TO_CODEX.md).
+
+**Dependencias nuevas:** ninguna. `expo-speech-recognition@^57` se investigó como alternativa nativa, pero no se incorporó: necesita plugin, permisos, build de desarrollo y pruebas reales; Expo Go no lo incorpora. No hubo cambios a package manifests en LV-005B-02 (los del ZIP ya tenían modificaciones anteriores). Próximo paso: QA manual en Chrome de escritorio con permiso/micrófono real, error/red y uso de la transcripción en opciones y respuesta escrita; después decidir si conviene fase nativa separada.
+
+## LV-005A-UI-01 — presentación inmersiva (2026-10-30)
+
+Implementado en la rama existente `feature/lv-005a-conversational-adventures`,
+árbol limpio al inicio. Sin cambiar rama ni realizar commit/push/merge/deploy.
+Diseño aprobado por delegación; documento y plan bajo `docs/superpowers/`.
+
+Escenario original local, seis NPC y cuatro entrenadores ilustrados; conversación
+compacta, respuestas integradas, ayuda en dos niveles, traducción sin revelación
+automática antes de intentar, borrador recuperado tras error, historial revisable
+debajo del turno y cierre con tres expresiones reales de la rama. Animación breve
+de opacidad con movimiento reducido. Se conservaron motores, versiones, progreso,
+consentimiento, repositorios, contratos de voz y Roast independiente.
+
+Validación: `npm.cmd test` 102/102; `npm.cmd run typecheck:core`, `npm.cmd run
+typecheck`, `npm.cmd run lint`, `npm.cmd run export:web` aprobados. Chrome 156 normal
+y `--roast`: recorridos completos, pistas, corrección, reanudación, finalización,
+historial, consentimiento/revocación, 320/390/1280 y viewport reducido. Capturas y
+logs locales en `.web-check` y `lv005a-ui01-*.log`. `git diff --check` limpio.
+
+Incidencias corregidas: prueba RED de traducción automática; import de tipo React;
+lint de ref durante render; revisión independiente detectó espaciado perdido en
+Roast y se restauró. GPU/CDP bloqueado en sandbox, QA Chrome completado fuera con
+autorización. ADB fuera del sandbox lista cero dispositivos: sin QA Android real.
+
+Archivos nuevos: `assets/adventure/{cafe,portraits,coaches}.jpg` y README;
+`src/components/AdventureArt.tsx`, `src/features/learning/ChapterReview.tsx`, tarea,
+diseño y plan. Modificados: UI/KeyboardScroll, Conversation, ExerciseView,
+MissionScreen, CoachCharacter, pruebas de presentación, script QA y documentación.
+
+Pendientes: arte final con expresiones/climas, revisión docente/cultural y usuarios
+reales; Android/iOS/teclado real/Safari/lectores/fuente grande. No se afirma eficacia
+pedagógica ni atractivo validados. Detalle en `CONVERSATIONAL_EXPERIENCE.md`.
+
+## LV-005A — aventura conversacional (2026-10-30)
+
+Rama verificada `feature/lv-005a-conversational-adventures`, base `b657790`, limpia
+al iniciar. Humor Engine, Roast, correcciones de teclado y documentos V3 presentes.
+Base repetida: 94/94 tests, ambos typechecks y lint aprobados. ESLint ya excluía
+`.web-check/**`; Git ignora perfiles, builds y logs, sin artefactos bajo seguimiento.
+
+Implementados escena gráfica local, NPC/estudiante diferenciados, ayuda desplegable,
+feedback unificado y conversación anterior derivada de eventos, sin otra persistencia
+ni turnos adelantados. Se preservan seis variantes, ocho objetivos, ramas y versiones
+anteriores. Roast independiente conservado y estilo de cafetería opcional agregado,
+desactivado por defecto, con consentimiento, snapshot persistido y revocación inmediata.
+Contratos de voz y hechos educativos preparados; sin voz, diario, pasaporte o recompensas.
+
+Ver [CONVERSATIONAL_EXPERIENCE.md](CONVERSATIONAL_EXPERIENCE.md) para arquitectura,
+QA reproducible y límites. Resultado: **100/100 tests**, typecheck:core, typecheck,
+lint y export:web aprobados. Chrome 156: recorrido completo, error/recuperación,
+reanudación, historial sin duplicados, finalización, reinicio, 320/390/1280 px sin
+overflow y campo/botón con foco en viewport reducido. Capturas inspeccionadas.
+Roast web conserva referencias y revocación; también se verificó activar su estilo
+en cafetería, conservar snapshot tras recarga y revocar manteniendo progreso.
+Ambos recorridos web terminaron con salida 0 y sin excepciones runtime.
+El primer Chrome falló GPU/CDP dentro
+del sandbox; reintento autorizado fuera del sandbox pasó.
+
+Android intentado en emulator-5554 con Expo Go y Metro 8087/8088: error de carga y
+posterior espera indefinida antes de verificar la misión. No se valida teclado nativo.
+Safari/iOS, lectores y dispositivos físicos pendientes. Servidores/reverse retirados.
+
+Archivos nuevos: `domain/conversation/presentation.ts`, `features/learning/Conversation.tsx`,
+`tests/conversational.test.cjs`, `tasks/LV-005A.md`, `docs/CONVERSATIONAL_EXPERIENCE.md`.
+Modificados: MissionScreen, ExerciseView, CoachReaction, modelos/preferencias de humor,
+MissionRepository, pruebas de presentación, script web y documentación. Sin cambios
+al Learning Engine, contenido francés, dependencias ni operaciones Git de escritura.
+Los apartados anteriores conservan su carácter histórico; Roast como estilo deja
+de estar pendiente para esta aventura compatible.
 
 ## Dirección de producto V3 registrada
 
