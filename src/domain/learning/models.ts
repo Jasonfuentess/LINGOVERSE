@@ -8,7 +8,48 @@ export interface ChoiceOption {
   spokenExplanation?: string;
   /** Exact editorial alternatives for reviewed transcripts; never fuzzy matching. */
   spokenAlternatives?: string[];
+  /** LV-007B: narrative facts confirmed by choosing this option. */
+  facts?: FactValues;
 }
+
+// ——— LV-007B contextual conversation contracts (all optional; legacy content is unaffected) ———
+/** How a reply was understood. Only `valid` and `valid-minor` advance the story. */
+export type ResponseOutcome = 'valid' | 'valid-minor' | 'ambiguous' | 'incorrect' | 'unrecognized' | 'off-context';
+export type FactValues = Record<string, string>;
+export type FactStatus = 'confirmed' | 'ambiguous';
+export interface FactCondition { fact: string; value: string; status?: FactStatus }
+/** An editorial communicative intent: exact reviewed phrasings with their own consequence. */
+export interface TextIntent {
+  id: string;
+  /** Exact phrasings (compared after normalisation). Each must also be listed in `accepted`. */
+  examples: string[];
+  explanation: string;
+  spokenExplanation?: string;
+  /** The character's reaction to this intent; defaults to the exercise reply. */
+  reply?: string;
+  /** Narrative consequence; defaults to the exercise `next`. */
+  next?: string | null;
+  /** Objectives demonstrated by this reply in addition to the exercise objective (e.g. stating the destination early). */
+  completes?: string[];
+  facts?: FactValues;
+}
+/** A reviewed small error that still achieves the communicative goal of this turn. */
+export interface MinorForm {
+  input: string;
+  better: string;
+  issue: 'spelling' | 'structure' | 'vocabulary';
+  explanation: string;
+  spokenExplanation?: string;
+  /** Routes like this intent when set; otherwise like the default accepted answer. */
+  intent?: string;
+}
+/** A reviewed reply whose meaning is unclear here: the character asks back inside the story. */
+export interface Clarification { inputs: string[]; reply: string; explanation: string; spokenExplanation?: string; facts?: FactValues }
+/** A reviewed, understandable reply that does not fit this moment of the story. */
+export interface OffContext { inputs: string[]; explanation: string; spokenExplanation?: string }
+/** Prompt shown instead of the default when every condition holds in conversation memory. */
+export interface ContextualPrompt { when: FactCondition[]; prompt: string; promptTranslation: string }
+
 interface ExerciseBase {
   id: string;
   objectiveId: string;
@@ -21,6 +62,11 @@ interface ExerciseBase {
   instruction: string;
   explanation: string;
   correction: string;
+  /** LV-007B opt-in: contextual interpretation, facts and outcomes. Absent on archived content. */
+  conversation?: 'contextual-v1';
+  /** Fact this turn asks for. Validation guarantees it is never asked once confirmed. */
+  asks?: string;
+  contextualPrompts?: ContextualPrompt[];
 }
 export interface ChoiceExercise extends ExerciseBase { kind: 'choice'; choices: ChoiceOption[] }
 export interface TextExercise extends ExerciseBase {
@@ -32,6 +78,12 @@ export interface TextExercise extends ExerciseBase {
   /** Spanish-only alternative used for spoken coaching when visible copy quotes English. */
   spokenExplanation?: string;
   unknownSpokenExplanation?: string;
+  intents?: TextIntent[];
+  minorForms?: MinorForm[];
+  clarifications?: Clarification[];
+  offContext?: OffContext[];
+  /** Facts confirmed by any accepted reply that is not part of a more specific intent. */
+  acceptedFacts?: FactValues;
 }
 export type Exercise = ChoiceExercise | TextExercise;
 export interface LessonVariant { id: string; title: string; start: string; exercises: Exercise[] }
@@ -54,6 +106,13 @@ export interface Evaluation {
   correction: string;
   reply: string;
   next: string | null;
+  /** LV-007B fields, present only for contextual exercises. */
+  outcome?: ResponseOutcome;
+  intentId?: string;
+  facts?: FactValues;
+  factStatus?: FactStatus;
+  completes?: string[];
+  minorIssue?: MinorForm['issue'];
 }
 export type AnswerSupport = 'assisted' | 'independent';
 export type LearningEvent = { type: 'answer'; nodeId: string; answer: LearnerAnswer; support?: AnswerSupport } | { type: 'continue' };

@@ -260,3 +260,24 @@ Keep final responses concise and evidence-based:
 No exaggerated success claims.
 
 Do not deliver documentation alone when the task requests working software.
+
+
+## Git and version control
+
+Git operations are managed exclusively by the project owner.
+
+Claude Code must NOT:
+- Create, switch, rename or delete branches.
+- Execute git add, commit, push, pull, fetch, merge, rebase, reset or clean.
+- Initialize repositories.
+- Modify .git configuration or repository history.
+- Automatically commit changes after completing tasks.
+
+Claude Code MAY:
+- Read git status, diff and log when necessary to understand existing changes.
+- Modify project source files as required by the assigned development task.
+- Report which files were modified.
+
+Leave all changes uncommitted for manual review.
+
+Do not suggest or execute Git commands unless explicitly requested by the project owner.

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { cafeLesson, cafeLessonV1 } = require('../.test-build/content/cafe');
 const { beginMission, currentExercise, submitAnswer, continueMission, restoreProgress } = require('../.test-build/domain/learning/engine');
 const { conversationPresentation, verifiedWrittenText } = require('../.test-build/domain/conversation/presentation');
+const { contextualExercise } = require('../.test-build/domain/conversation/memory');
 
 test('written transcript retains the accepted equivalent actually used, normalized to editorial content', () => {
   const exercise = cafeLesson.variants[0].exercises.find(e => e.kind === 'text' && e.accepted.length > 1);
@@ -17,6 +18,8 @@ test('conversation projection follows all six variants and eight branch combinat
     let decisions = 0;
     while (progress.status === 'active') {
       const exercise = currentExercise(lesson, progress);
+      // LV-007B: the transcript keeps the prompt exactly as it was shown at the start of the turn.
+      const shown = contextualExercise(lesson, progress);
       const correct = exercise.kind === 'choice' ? exercise.choices.filter(c => c.correct) : [];
       const option = correct.length > 1 ? correct[(route >> decisions++) & 1] : correct[0];
       const answer = exercise.kind === 'choice' ? { kind: 'choice', choiceId: option.id } : { kind: 'text', text: exercise.accepted[0] };
@@ -28,7 +31,7 @@ test('conversation projection follows all six variants and eight branch combinat
       assert.equal(view.history.length, progress.completedObjectives.length);
       assert.deepEqual(view, conversationPresentation(lesson, restoreProgress(lesson, JSON.parse(JSON.stringify(progress)))));
       const turn = view.history.at(-1);
-      assert.equal(turn.messages[0].text, exercise.prompt);
+      assert.equal(turn.messages[0].text, shown.prompt);
       assert.equal(turn.messages[1].text, option?.label ?? exercise.accepted[0]);
       assert.equal(new Set(view.history.flatMap(t => t.messages.map(m => m.id))).size, view.history.flatMap(t => t.messages).length);
     }

@@ -13,6 +13,7 @@ import { matchSpokenChoice } from '../../domain/voice/choiceMatching';
 import { inspectTranscript } from '../../domain/voice/transcriptReview';
 import { BeginnerPreparation, type PreparationProps } from './BeginnerPreparation';
 import { LearningRescue, type RescueProps } from './LearningRescue';
+import { ChoiceListening } from './ChoiceListening';
 
 export function ExerciseView({ exercise, feedback, submittedAnswer, saving, error, onAnswer, onContinue, conversational = false, language = 'fr', adventure = 'cafe', preparation, rescue }: {
   exercise: Exercise; feedback: Evaluation | null; saving: boolean; error: string | null;
@@ -46,7 +47,7 @@ export function ExerciseView({ exercise, feedback, submittedAnswer, saving, erro
     {preparation && !feedback?.correct && <BeginnerPreparation {...preparation} language={voiceLanguage} answered={false} />}
     {(!conversational || !feedback?.correct) && <View style={conversational ? local.help : undefined}>
       {conversational ? <Pressable accessibilityRole="button" accessibilityState={{ expanded: helpOpen }} onPress={() => { markHelp();setHelpOpen(!helpOpen); }} style={local.helpButton}><Text style={local.helpLabel}>{helpOpen ? 'Cerrar ayuda' : 'Necesito una pista'}</Text></Pressable> : <Copy>ANTES DE RESPONDER</Copy>}
-      {conversational && helpOpen && <><Copy>{exercise.instruction}</Copy><Pressable accessibilityRole="button" accessibilityState={{ expanded: expressionsOpen }} onPress={() => setExpressionsOpen(!expressionsOpen)} style={local.helpButton}><Text style={local.helpLabel}>{expressionsOpen ? 'Ocultar expresiones' : 'Ver traducción y expresiones'}</Text></Pressable></>}
+      {conversational && helpOpen && <>{rescue?.mode !== 'a1' && <Copy>{exercise.instruction}</Copy>}<Pressable accessibilityRole="button" accessibilityState={{ expanded: expressionsOpen }} onPress={() => setExpressionsOpen(!expressionsOpen)} style={local.helpButton}><Text style={local.helpLabel}>{expressionsOpen ? 'Ocultar expresiones' : 'Ver traducción y expresiones'}</Text></Pressable></>}
       {(!conversational || (helpOpen && expressionsOpen)) && <Copy>{exercise.teaching}</Copy>}
     </View>}
     {answerReady && (!conversational || !feedback?.correct) && <>
@@ -58,6 +59,7 @@ export function ExerciseView({ exercise, feedback, submittedAnswer, saving, erro
       {!conversational && <Copy>Tu respuesta escrita (máximo 400 caracteres)</Copy>}
       <AnswerTextInput accessibilityLabel={exercise.instruction} value={text} onChangeText={setText} editable={!locked} maxLength={400} multiline autoCorrect={false} autoCapitalize="sentences" style={local.input} placeholder={language === 'en' ? 'Escribí en inglés…' : 'Escribí en francés…'} placeholderTextColor={t.color.muted} />
     </>}
+    {conversational && exercise.kind === 'choice' && !feedback?.correct && <ChoiceListening key={exercise.id} choices={exercise.choices} language={voiceLanguage} mode={rescue?.mode ?? 'autonomous'} onHelp={markHelp} />}
     {rescue&&<Button variant="text" label={oralAnswerOpen?'Cerrar respuesta por micrófono':'Responder usando micrófono'} onPress={()=>setOralAnswerOpen(!oralAnswerOpen)} />}
     {(!rescue||oralAnswerOpen)&&<SpeechInput key={`${language}:${exercise.id}`} language={voiceLanguage} disabled={locked} inspect={(transcript, evidence) => inspectTranscript(exercise, transcript, voiceLanguage, evidence)} onUse={transcript => {
       markHelp();
@@ -77,7 +79,7 @@ export function ExerciseView({ exercise, feedback, submittedAnswer, saving, erro
     {conversational && feedback?.reply ? <ConversationMessage role="npc" speaker={exercise.speaker} text={feedback.reply} language={voiceLanguage} /> : null}
     <CoachReaction language={language} adventure={adventure} feedback={feedback} submittedText={conversational ? undefined : submittedText} speaker={exercise.speaker} separateReply={conversational} />
     {preparation && feedback?.correct && <BeginnerPreparation {...preparation} language={voiceLanguage} answered />}
-    {error && <Notice message={error} />}
+    {error ? <Notice message={error} /> : null}
     {feedback?.correct && <Button label={saving ? 'Guardando…' : (feedback.next === null || exercise.id === 'depart') ? 'Terminar aventura' : 'Continuar conversación'} disabled={saving} onPress={() => { void onContinue(); }} />}
   </View>;
 }

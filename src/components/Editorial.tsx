@@ -6,7 +6,7 @@ import { tokens as t } from '../theme/tokens';
 
 export function Eyebrow({ children }: PropsWithChildren) { return <Text style={e.eyebrow}>{children}</Text>; }
 export function SectionTitle({ number, title, detail }: { number: string; title: string; detail?: string }) {
-  return <View style={e.section}><Text style={e.number}>{number}</Text><View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={e.sectionTitle}>{title}</Text>{detail && <Text style={e.detail}>{detail}</Text>}</View></View>;
+  return <View style={e.section}><Text style={e.number}>{number}</Text><View style={{ flex: 1, gap: 4 }}><Text accessibilityRole="header" style={e.sectionTitle}>{title}</Text>{Boolean(detail) && <Text style={e.detail}>{detail}</Text>}</View></View>;
 }
 export function Intro({ label, title, description }: { label: string; title: string; description: string }) {
   const { width } = useWindowDimensions();

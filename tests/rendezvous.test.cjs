@@ -16,7 +16,9 @@ const byId = (v, id) => { const e = v.exercises.find(e=>e.id===id); assert.ok(e,
 test('LV-006B: validated A1 adventure has independent ID/version, two variants and ten objectives', () => {
   assert.equal(validateLesson(rendezvousLesson), rendezvousLesson);
   assert.equal(rendezvousLesson.id,'fr-a1-paris-rendezvous');
-  assert.equal(rendezvousLesson.version,1);
+  // LV-007B: new runs use contextual v2; v1 stays archived and resumable.
+  assert.equal(rendezvousLesson.version,2);
+  assert.equal(require('../.test-build/content/rendezvous').rendezvousLessonV1.version,1);
   assert.equal(rendezvousLessonForProgress(null), rendezvousLesson);
   assert.equal(rendezvousLessonForProgress(beginMission(rendezvousLesson)), rendezvousLesson);
   assert.throws(() => rendezvousLessonForProgress(beginMission(cafeLesson)), /Versión/);
@@ -203,5 +205,5 @@ test('LV-006B: French existing content not altered; new chapters have their own 
   assert.match(art,/RendezvousArtwork/);
   assert.match(art,/riverside/);
   assert.equal(cafeLesson.id,'fr-a1-paris-cafe');
-  assert.equal(londonLesson.version,4);
+  assert.equal(londonLesson.version,5);
 });

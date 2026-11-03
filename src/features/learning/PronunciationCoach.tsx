@@ -13,9 +13,11 @@ export const SLOW_RATE = 0.65;
  * Teaching aid only: plays original text in the guide's locale through the shared voice controller.
  * It never receives an answer callback, so it cannot submit, grade or record pronunciation.
  */
-export function PronunciationCoach({ guide, text, language, mode, onHelp, related = false, defaultOpen = false }: {
+export function PronunciationCoach({ guide, text, language, mode, onHelp, related = false, defaultOpen = false, compact = related }: {
   guide: PronunciationGuide | null; text: string; language: 'fr-FR' | 'en-GB'; mode: PedagogicalMode;
   onHelp: () => void; related?: boolean; defaultOpen?: boolean;
+  /** Secondary coaches (related chunk, choice options) skip the mute/voice notices already shown once by the main model. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const locale = guide?.locale ?? language;
@@ -28,7 +30,7 @@ export function PronunciationCoach({ guide, text, language, mode, onHelp, relate
       <Text style={s.approximate}>{guide.approximate}</Text>
       <Text style={s.note}>Orientación, no fonética exacta. El original y su audio son la referencia.</Text>
     </View>}
-    <StudyAudio text={original} language={locale} />
+    {compact ? <View style={s.row}><SpeechButton text={original} language={locale} label={`«${original}»`} /><SpeechButton text={original} language={locale} rate={SLOW_RATE} label={`«${original}» más despacio`} /></View> : <StudyAudio text={original} language={locale} />}
     {!guide && !related && <Text style={s.note}>Esta respuesta todavía no tiene una guía aproximada revisada. Escuchá el audio original; podés continuar sin ella.</Text>}
     {guide && <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={open ? `Cerrar cómo se pronuncia ${guide.original}` : `¿Cómo se pronuncia ${guide.original}?`} onPress={() => { if (!open) onHelp(); setOpen(!open); }} style={s.toggle}>
       <Text style={s.toggleText}>{open ? 'Cerrar pronunciación' : '¿Cómo se pronuncia?'}</Text>
@@ -38,18 +40,18 @@ export function PronunciationCoach({ guide, text, language, mode, onHelp, relate
       {guide.units.map((unit, i) => <View key={`${i}:${unit.text}`} style={s.unit}>
         <Text style={s.unitText}>{unit.text}</Text>
         <Text style={s.meaning}>{unit.meaning}</Text>
-        {unit.approximate && <Text style={s.unitApproximate}>≈ {unit.approximate}</Text>}
-        <View style={s.row}>
+        {Boolean(unit.approximate) && <Text style={s.unitApproximate}>≈ {unit.approximate}</Text>}
+        {guide.units.length > 1 && <View style={s.row}>
           <SpeechButton text={unit.text} language={locale} label={`«${unit.text}»`} />
           <SpeechButton text={unit.text} language={locale} rate={SLOW_RATE} label={`«${unit.text}» más despacio`} />
-        </View>
+        </View>}
       </View>)}
       {guide.units.length === 1 && <Text style={s.note}>Se practica completa para conservar sus sonidos; no se divide en sílabas artificiales.</Text>}
       {guide.units.length > 1 && <Text style={s.note}>Escuchá cada parte y después la frase completa: al unirse, los sonidos pueden cambiar.</Text>}
       <Text accessibilityRole="header" style={s.label}>SONIDOS PARA PRESTAR ATENCIÓN</Text>
       {guide.focus.map(item => <Text key={item} style={s.body}>{item}</Text>)}
       {guide.tips.map(tip => <View key={tip.id} style={s.tip}><Text style={s.tipLabel}>{tip.label}</Text><Text style={s.body}>{tip.explanation}</Text></View>)}
-      {guide.caveat && <Text style={s.note}>{guide.caveat}</Text>}
+      {Boolean(guide.caveat) && <Text style={s.note}>{guide.caveat}</Text>}
       <Text style={s.note}>Escuchar y repetir es práctica personal: no se graba, no se califica tu pronunciación y no suma errores.</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Volver a la conversación" onPress={() => setOpen(false)} style={s.toggle}><Text style={s.toggleText}>Volver a la conversación</Text></Pressable>
     </View>}

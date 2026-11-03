@@ -1,4 +1,5 @@
-import { cafeLesson } from './cafe';
+// Pinned to café v2: LV-007B café v3 must not silently change the versioned Roast package.
+import { cafeLessonV2 as cafeLesson } from './cafe';
 import type { Lesson } from '../domain/learning/models';
 // Pedagogy and branches remain the versioned café package; progress is isolated.
 export const roastLessonV2: Lesson = { ...cafeLesson, id: 'roast-cafe-fr-a1', title: 'Roast Me · Un café sin pena' };

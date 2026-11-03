@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Redirect, useRouter } from 'expo-router';
 import { Button, Card, Copy, Heading, Loading, Notice, Page } from '../../components/ui';
 import { cafeLessonForProgress } from '../../content/cafe';
-import { currentExercise } from '../../domain/learning/engine';
+import { contextualExercise } from '../../domain/conversation/memory';
 import { usePreferences } from '../preferences/PreferencesProvider';
 import { ExerciseView } from './ExerciseView';
 import { useMission } from './MissionProvider';
@@ -43,7 +43,7 @@ export function MissionScreen({ language = 'fr', adventure = 'cafe' }: { languag
   const submittedAnswer = progress?.events.filter(event => event.type === 'answer').at(-1)?.answer;
   const conversational = state.mode !== 'roast';
   const presentation = progress && !state.loadError && conversational ? conversationPresentation(lesson, progress) : null;
-  const active = progress?.status === 'active' && !state.loadError ? currentExercise(lesson, progress) : null;
+  const active = progress?.status === 'active' && !state.loadError ? contextualExercise(lesson, progress) : null;
   const supportEntry = support.data?.languages[language];
   const rescue = active && conversational ? learningRescue(language, adventure, active) : null;
   const evidence = progress && !state.loadError ? practiceEvidence(lesson,progress) : null;
@@ -77,7 +77,7 @@ export function MissionScreen({ language = 'fr', adventure = 'cafe' }: { languag
     </> : <>
       {!conversational && <Copy>{variant?.title} · {progress.completedObjectives.length}/{lesson.objectives.length} pasos completados</Copy>}
       {conversational && presentation && <ConversationBridge beat={latestConversationBeat(presentation.history)} language={english ? 'en-GB' : 'fr-FR'} />}
-      <TurnEntrance key={`${progress.run}:${progress.nodeId}`}><ExerciseView language={language} adventure={adventure} conversational={conversational} rescue={rescue?{plan:rescue,mode:supportEntry?pedagogicalMode(supportEntry):'starter'}:undefined} exercise={currentExercise(lesson, progress)} feedback={progress.feedback} submittedAnswer={submittedAnswer} saving={state.saving} error={state.saveError} onAnswer={state.answer} onContinue={state.advance} /></TurnEntrance>
+      <TurnEntrance key={`${progress.run}:${progress.nodeId}`}><ExerciseView language={language} adventure={adventure} conversational={conversational} rescue={rescue?{plan:rescue,mode:supportEntry?pedagogicalMode(supportEntry):'starter'}:undefined} exercise={active!} feedback={progress.feedback} submittedAnswer={submittedAnswer} saving={state.saving} error={state.saveError} onAnswer={state.answer} onContinue={state.advance} /></TurnEntrance>
     </>}
     {!state.loadError && progress?.status === 'completed' && <CoachReaction language={language} adventure={adventure} />}
     {presentation && <ConversationHistory key={`${lesson.id}:${progress!.run}`} language={english ? 'en-GB' : 'fr-FR'} turns={presentation.history} />}

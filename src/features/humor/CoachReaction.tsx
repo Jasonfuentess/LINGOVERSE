@@ -5,7 +5,7 @@ import { useMission } from '../learning/MissionProvider';
 import { usePreferences } from '../preferences/PreferencesProvider';
 import { useHumorPreferences } from './HumorPreferencesProvider';
 import type { Evaluation } from '../../domain/learning/models';
-import { EducationalFeedback } from '../learning/EducationalFeedback';
+import { EducationalFeedback, outcomeLabel } from '../learning/EducationalFeedback';
 import { canRoast } from '../../domain/humor/access';
 import { CoachSpeech } from '../voice/VoiceControls';
 export function CoachReaction({ feedback: originalFeedback, submittedText, speaker = '', separateReply = false, language = 'fr', adventure = 'cafe' }: { feedback?: Evaluation | null; submittedText?: string; speaker?: string; separateReply?: boolean; language?: 'fr' | 'en'; adventure?: 'cafe' | 'rendezvous' }) {
@@ -19,7 +19,7 @@ export function CoachReaction({ feedback: originalFeedback, submittedText, speak
   if (mode === 'roast' ? !canRoast(settings) || reaction.mode !== 'roast' : !settings?.enabled || (settings.intensity === 'gentle' && reaction.intensity === 'playful') || reaction.explicit || reaction.mode !== 'friendly') return fallback;
   const coach = coaches.find(coach => coach.locale === reaction.locale);
   if (!coach) return fallback;
-  const resultLabel = feedback?.writtenIssue === 'unknown' ? 'Aún no podemos verificarla' : feedback ? feedback.correct
+  const resultLabel = feedback && outcomeLabel(feedback) ? outcomeLabel(feedback) : feedback?.writtenIssue === 'unknown' ? 'Aún no podemos verificarla' : feedback ? feedback.correct
     ? mode === 'roast' || reaction.category === 'recovery' ? '¡Ahora sí, bien resuelto!' : '¡Bien resuelto!'
     : reaction.category === 'retry' || reaction.category === 'recurring' ? 'Probemos de nuevo' : 'Vamos por partes'
     : reaction.category === 'celebration' ? '¡Aventura completada!' : undefined;

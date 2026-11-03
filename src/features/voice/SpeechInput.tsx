@@ -59,8 +59,8 @@ export function SpeechInput({ onUse, disabled, language = 'fr-FR', inspect, purp
       }}><Text style={[styles.buttonLabel, (disabled || tooLong || !draft.trim()) && styles.disabled]}>Confirmar y usar texto revisado</Text></Pressable>
       <Text style={styles.copy}>Solo prepara tu respuesta. Después elegís si querés enviarla al personaje.</Text>
     </>}
-    {state.error && <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>}
-    {matchingError && <Text accessibilityRole="alert" style={styles.error}>{matchingError}</Text>}
+    {Boolean(state.error) && <Text accessibilityRole="alert" style={styles.error}>{state.error}</Text>}
+    {Boolean(matchingError) && <Text accessibilityRole="alert" style={styles.error}>{matchingError}</Text>}
   </View>;
 }
 const styles = StyleSheet.create({

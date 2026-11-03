@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { roastLesson, roastLessonV2 } = require('../.test-build/content/roast.js');
 const { roastLibrary } = require('../.test-build/content/roastHumor.js');
-const { cafeLesson } = require('../.test-build/content/cafe.js');
+const { cafeLesson, cafeLessonV2 } = require('../.test-build/content/cafe.js');
 const { MissionRepository } = require('../.test-build/storage/missionRepository.js');
 const { humorDefaults, grantAdultConsent, disableAdult } = require('../.test-build/domain/humor/preferences.js');
 const { canRoast } = require('../.test-build/domain/humor/access.js');
@@ -29,7 +29,9 @@ test('Roast defaults deny access; both confirmations mandatory; normal intensity
 });
 test('roast package reuses all eight objectives and French branches without modifying normal content', () => {
   assert.notEqual(roastLesson.id, cafeLesson.id);
-  assert.deepEqual(roastLessonV2.variants, cafeLesson.variants);
+  // Roast stays pinned to the café v2 package; LV-007B café v3 does not change it.
+  assert.deepEqual(roastLessonV2.variants, cafeLessonV2.variants);
+  assert.ok([roastLessonV2, roastLesson].every(l => l.variants.every(v => v.exercises.every(e => e.conversation === undefined))));
   assert.equal(roastLesson.objectives.length, 8);
   validateLibrary(roastLibrary); assert.ok(roastLibrary.length >= 96);
 });

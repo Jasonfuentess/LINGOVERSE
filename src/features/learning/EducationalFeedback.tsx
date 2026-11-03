@@ -4,6 +4,10 @@ import type { Evaluation } from '../../domain/learning/models';
 import { tokens as t } from '../../theme/tokens';
 import { CoachSpeech, SpeechButton } from '../voice/VoiceControls';
 
+/** LV-007B: human-facing titles for contextual outcomes (no technical intent labels). */
+export function outcomeLabel(feedback: Evaluation): string | undefined {
+  return feedback.outcome === 'valid-minor' ? '¡Se entendió!' : feedback.outcome === 'ambiguous' ? 'Necesita una aclaración' : feedback.outcome === 'off-context' ? 'No encaja en este momento' : undefined;
+}
 export function EducationalFeedback({ feedback, submittedText, speaker, embedded = false, resultLabel, coachExplanation, language = 'fr' }: {
   feedback: Evaluation; submittedText?: string; speaker: string;
   embedded?: boolean; resultLabel?: string;
@@ -12,13 +16,13 @@ export function EducationalFeedback({ feedback, submittedText, speaker, embedded
   return <View accessibilityLiveRegion={embedded ? undefined : 'polite'} style={embedded ? styles.embedded : [styles.panel, !feedback.correct && styles.retry, feedback.writtenIssue === 'unknown' && styles.unknown]}>
     <View style={styles.header}>
       <Text accessible={false} style={[styles.symbol, !feedback.correct && styles.retrySymbol]}>{feedback.correct ? '✓' : feedback.writtenIssue === 'unknown' ? '?' : '↻'}</Text>
-      <Text accessibilityRole="header" style={styles.title}>{resultLabel ?? (feedback.correct ? '¡Bien resuelto!' : feedback.writtenIssue === 'unknown' ? 'Aún no podemos verificarla' : 'Vamos por partes')}</Text>
+      <Text accessibilityRole="header" style={styles.title}>{resultLabel ?? outcomeLabel(feedback) ?? (feedback.correct ? '¡Bien resuelto!' : feedback.writtenIssue === 'unknown' ? 'Aún no podemos verificarla' : 'Vamos por partes')}</Text>
     </View>
-    {submittedText && <Copy>Tu respuesta: {submittedText}</Copy>}
+    {Boolean(submittedText) && <Copy>Tu respuesta: {submittedText}</Copy>}
     <Copy>{coachExplanation ?? feedback.explanation}</Copy>
     {!embedded && <CoachSpeech text={feedback.spokenExplanation ?? feedback.explanation} />}
-    {(!feedback.correct || coachExplanation) && <View style={styles.correction}><Text style={styles.label}>UNA FORMA DE RESPONDER</Text><Text style={styles.answer}>{feedback.correction}</Text></View>}
-    {(!feedback.correct || coachExplanation) && <SpeechButton text={feedback.correction.split('→')[0]!.split(' / ')[0]!.trim()} language={language === 'en' ? 'en-GB' : 'fr-FR'} label={`el ejemplo en ${language === 'en' ? 'inglés' : 'francés'}`} />}
+    {(!feedback.correct || coachExplanation || feedback.outcome === 'valid-minor') && <View style={styles.correction}><Text style={styles.label}>{feedback.outcome === 'valid-minor' ? 'UNA FORMA MÁS PRECISA' : 'UNA FORMA DE RESPONDER'}</Text><Text style={styles.answer}>{feedback.correction}</Text></View>}
+    {(!feedback.correct || coachExplanation || feedback.outcome === 'valid-minor') && <SpeechButton text={feedback.correction.split('→')[0]!.split(' / ')[0]!.trim()} language={language === 'en' ? 'en-GB' : 'fr-FR'} label={`el ejemplo en ${language === 'en' ? 'inglés' : 'francés'}`} />}
     {feedback.reply.length > 0 && <Copy>{speaker}: {feedback.reply.replace('→', '—')}</Copy>}
     {feedback.reply.length > 0 && <SpeechButton text={feedback.reply.split('→')[0]!.trim()} language={language === 'en' ? 'en-GB' : 'fr-FR'} label={`la respuesta de ${speaker}`} />}
     {!feedback.correct && <Copy>Podés volver a intentarlo con la ayuda de arriba.</Copy>}

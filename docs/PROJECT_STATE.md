@@ -1,3 +1,80 @@
+# LV-009-LEARN-04 — Lesson Practice & Pronunciation Coverage (02-nov-2026)
+
+**Estado:** implementado; pruebas y Chrome real headless aprobados. **Pendiente:** escucha humana, micrófono físico y revisión docente de las 34 guías nuevas.
+
+**Problemas encontrados:**
+- `LearningRescue` repetía todo el bloque de audio del modelo y el vocabulario al abrir «Practicar, construir y ver vocabulario» (origen confirmado).
+- La guía relacionada y las guías de una sola unidad también duplicaban reproductores, y en A1 se repetía la instrucción.
+- Faltaban guías para el modelo de muchos turnos de selección (incluidos los precios con *liaison*) y para decisiones igualmente válidas.
+- Las opciones no se podían escuchar.
+
+**Solución:**
+- 34 guías nuevas (69 en total) y tres consejos de sonido.
+- Nuevo `ChoiceListening` neutral: escuchar cada opción y, si hay guía, ver significado y pronunciación. No revela la correcta, no envía y no selecciona.
+- `PronunciationCoach` compacto para ayudas secundarias.
+- Desplegable consolidado «Practicar y construir mi respuesta».
+- Sin cambios en motores, evaluación, contenido de misiones, persistencia, voz, LV-007B ni Roast.
+
+**Cobertura del modelo de los turnos de selección:** Café 8/13 → 13/13, Londres 1/7 → 7/7, Rendez-vous 2/15 → 15/15. Todas las decisiones válidas distintas tienen al menos una frase guiada.
+
+**Archivos:**
+- Nuevos: `src/features/learning/ChoiceListening.tsx`, `tests/lesson-practice.test.cjs`, `docs/LV-009-LEARN-04-PRACTICE.md`, `tasks/LV-009-LEARN-04.md`.
+- Modificados: `src/content/pronunciation.ts`, `src/features/learning/{PronunciationCoach,LearningRescue,ExerciseView}.tsx`, `scripts/check-premium.mjs`, `tests/{pronunciation-coach,text-node-regression}.test.cjs`.
+- Respaldo en `.backups/LV-009-LEARN-04-20261102-225029` (tomado después de añadir las guías al catálogo; el estado anterior de `pronunciation.ts` está en `.backups/LV-007B-20261102-214248`).
+
+**Verificación:** 226/226, ambos typechecks, lint, export web, `check-premium` ×3 y `check-conversation` PASS. Logs `lv009l4-*.log`. Sin Git.
+
+Detalle, guías y QA manual: [LV-009-LEARN-04-PRACTICE.md](LV-009-LEARN-04-PRACTICE.md).
+
+# Corrección LearningRescue.tsx:43 — nodo de texto vacío en un View (02-nov-2026)
+
+Solicitada como «corrección adicional de LV-009-LEARN-04» antes de recibir la especificación de esa etapa. Forma parte de su reporte (ver arriba).
+
+**Causa (reproducida):** `{practiceText&&<View…>}`. `practiceText` es una cadena que vale `''` al abrir «Practicar hablando sin enviar», y `'' && x` devuelve `''`. Ese nodo de texto vacío queda como hijo directo de un `View`. React Native Web, en desarrollo (`npm run web`), emite `Unexpected text node: . A text node cannot be a child of a <View>.`; el mensaje parece truncado porque el texto está vacío. En Android/iOS el mismo patrón cierra la app.
+
+Segundo caso real del mismo tipo: `EducationalFeedback` `{submittedText && …}` en Roast independiente, tras una respuesta no reconocida (se guarda `''` por privacidad).
+
+No era `build &&` (booleano).
+
+**Por qué no se detectó antes:** las pruebas de UI simulaban `react-native` con componentes falsos, y `check-premium` usa la exportación de producción, donde esa comprobación está desactivada.
+
+**Corrección:** condiciones booleanas explícitas en ambos casos y, por la misma regla, en los demás condicionales con cadenas (`PronunciationCoach`, `BeginnerPreparation`, `ExerciseView`, `Editorial`, `SpeechInput`, `PreferencesForm`). No se silencian errores ni se quita contenido.
+
+**Evidencia:**
+- `tests/text-node-regression.test.cjs` (3 casos, con el `View` **real** de react-native-web en modo desarrollo): falla antes de corregir y pasa después. Barre todas las ayudas, abriendo y cerrando, en los 3 modos y en todos los turnos de las tres aventuras, sin envíos.
+- Chrome real contra un servidor de desarrollo propio: antes, 1 error por aventura al abrir la práctica; después, 0. El borrador y el progreso guardado se conservan en ambos casos.
+
+**Verificación:** 218/218, ambos typechecks, lint, export, `check-premium` ×3 y `check-conversation` PASS. Logs `lv009-fix-*.log`. Respaldo en `.backups/LV-009-LEARN-04-FIX-20261102-223005`. Sin Git.
+
+# LV-007B — Contextual Conversation Engine (02-nov-2026)
+
+**Estado:** implementado; pruebas automatizadas y recorridos en Chrome real headless aprobados. **Pendiente:** QA manual del usuario, incluidos audio y micrófono.
+
+**Línea base verificada antes de cambiar:** 204/204.
+
+**Qué se hizo:**
+- Intérprete local y determinista de frases editoriales con seis resultados: válida, válida con error menor, ambigua, incorrecta, no reconocida y fuera de contexto.
+- Memoria derivada de los eventos, sin persistencia nueva.
+- Prompts contextuales.
+- Validación estática: ninguna ruta vuelve a preguntar un hecho confirmado y todas cumplen los objetivos.
+- Contenido nuevo:
+  - Londres v5: el destino dicho en «What do you need?» se recuerda y no se repregunta.
+  - Café v3: la camarera recuerda bebida, lugar y azúcar.
+  - Rendez-vous v2: se corrige que el contacto revelara el lugar antes de preguntarlo; el lugar dicho temprano se recuerda.
+- Londres v4, Café v2 y Rendez-vous v1 se archivaron con datos idénticos (verificado) y siguen siendo reanudables.
+- Roast Me quedó fijado a café v2, sin cambios.
+
+**Archivos:**
+- Nuevos: `src/domain/learning/interpretation.ts`, `src/domain/conversation/memory.ts`, `src/content/london.v4.ts`, `src/content/rendezvous.v1.ts`, `tests/contextual-conversation.test.cjs`, `scripts/check-conversation.mjs`, `docs/LV-007B-CONTEXTUAL-CONVERSATION.md`, `tasks/LV-007B.md`.
+- Modificados: `src/domain/learning/{models,engine,validation}.ts`, `src/domain/conversation/presentation.ts`, `src/content/{london,cafe,rendezvous,roast}.ts`, `src/features/learning/{MissionProvider,MissionScreen,EducationalFeedback}.tsx`, `src/features/humor/CoachReaction.tsx`.
+- Pruebas anteriores con expectativas de versión actualizadas (sin debilitarlas; ver documento): beginner-learning, conversation-profiles, conversational, london-review, london, rendezvous, roast.
+
+**Respaldo** verificado (196 archivos, SHA-256) en `.backups/LV-007B-20261102-214248`.
+
+**Verificación:** 215/215 (204 + 11 nuevas; 736 conversaciones completas recorridas), ambos typechecks, lint, export web, `check-premium.mjs` normal/`--beginner`/`--rescue` y `check-conversation.mjs` PASS. Logs `lv007b-*.log`. Sin operaciones Git.
+
+Detalle, escenarios, QA manual y limitaciones: [LV-007B-CONTEXTUAL-CONVERSATION.md](LV-007B-CONTEXTUAL-CONVERSATION.md).
+
 # LV-008-LEARN-03 — Pronunciation Coach (02-nov-2026)
 
 **Estado: APROBADA.** **Validación confirmada por el usuario:** 9/9 pruebas manuales en Chrome. Cubren audio, pronunciación, micrófono, ayudas y experiencia móvil. Las ejecutó el usuario, no Claude. La guía archivada tiene 10 pasos; no se atribuye una correspondencia paso a paso. No volver a implementar ni probar esta etapa.

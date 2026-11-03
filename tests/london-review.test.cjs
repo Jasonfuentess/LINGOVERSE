@@ -116,7 +116,8 @@ test('REV-01: natural conversational order and routes do not transport guides to
 
 test('REV-01: archived v2 rejection stays authored; v1/v2 replay while v3/v4 accept same input', async () => {
   for (const lesson of [londonLessonV1,londonLessonV2,londonLessonV3,londonLesson,cafeLesson,cafeLessonV1]) validateLesson(lesson);
-  assert.deepEqual([londonLessonV1.version,londonLessonV2.version,londonLessonV3.version,londonLesson.version], [1,2,3,4]);
+  assert.deepEqual([londonLessonV1.version,londonLessonV2.version,londonLessonV3.version,londonLesson.version], [1,2,3,5]);
+  assert.equal(require('../.test-build/content/london').londonLessonV4.version, 4, 'LV-007B keeps v4 archived');
   let old = beginMission(londonLessonV2, 0, () => 'riverside-rain');
   old = continueMission(londonLessonV2,submitAnswer(londonLessonV2,old,{kind:'choice',choiceId:'hello'}));
   old = continueMission(londonLessonV2,submitAnswer(londonLessonV2,old,textAnswer("I'm new here.")));
@@ -132,7 +133,7 @@ test('REV-01: archived v2 rejection stays authored; v1/v2 replay while v3/v4 acc
   await repo.save(old);
   assert.deepEqual(await new MissionRepository(storage,londonLesson,[londonLessonV1,londonLessonV2]).load(),old);
   const fresh = await repo.start(()=>0.18);
-  assert.equal(fresh.contentVersion,4);
+  assert.equal(fresh.contentVersion,5);
   assert.equal(evaluateAnswer(byId(londonLessonV3.variants[1],'help'),textAnswer('I need help')).correct,true);
   assert.equal(evaluateAnswer(byId(all[1],'help'),textAnswer('I need help')).correct,true);
 });

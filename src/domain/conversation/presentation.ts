@@ -1,7 +1,12 @@
 import { beginMission, continueMission, currentExercise, normalizeAnswer, submitAnswer } from '../learning/engine';
 import type { Evaluation, LearnerAnswer, Lesson, MissionProgress, TextExercise } from '../learning/models';
+import { normalizeWritten } from '../learning/written';
+import { emptyMemory, rememberFeedback, withContext } from './memory';
 
 export function verifiedWrittenText(exercise: TextExercise, answer?: LearnerAnswer): string {
+  // LV-007B: a reviewed minor slip is shown in its improved form, never as an unrelated model.
+  const minor = answer?.kind === 'text' ? exercise.minorForms?.find(form => normalizeWritten(form.input) === normalizeWritten(answer.text)) : undefined;
+  if (minor) return minor.better;
   return exercise.accepted.find(text => answer?.kind === 'text' && normalizeAnswer(text) === normalizeAnswer(answer.text)) ?? exercise.accepted[0]!;
 }
 
@@ -58,14 +63,19 @@ export function conversationPresentation(lesson: Lesson, progress: MissionProgre
   const history: ConversationTurn[] = [];
   const facts: AdventureFact[] = [];
   let attempts = 0;
+  let memory = emptyMemory();
+  let turnMemory = memory;
   const prefix = `${lesson.id}:${lesson.version}:${progress.run}`;
   for (const [index, event] of progress.events.entries()) {
     if (event.type === 'answer') {
       cursor = submitAnswer(lesson, cursor, event.answer);
+      const recorded = cursor.events.at(-1);
+      if (recorded?.type === 'answer' && cursor.feedback) memory = rememberFeedback(memory, event.nodeId, cursor.feedback, recorded.answer);
       attempts++;
       continue;
     }
-    const exercise = currentExercise(lesson, cursor);
+    // The prompt as the character said it when this turn started.
+    const exercise = withContext(currentExercise(lesson, cursor), turnMemory);
     const answer = cursor.events.at(-1);
     const feedback = cursor.feedback!;
     const id = `${prefix}:${exercise.id}`;
@@ -84,6 +94,7 @@ export function conversationPresentation(lesson: Lesson, progress: MissionProgre
     cursor = continueMission(lesson, cursor);
     if (cursor.status === 'completed') facts.push({ ...base, id: `${prefix}:completed:${index}`, type: 'mission-completed' });
     attempts = 0;
+    turnMemory = memory;
   }
   return { history, facts, voice: { playback: 'unavailable', spokenResponse: 'unavailable' } as VoiceCapabilities };
 }

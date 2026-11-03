@@ -7,7 +7,6 @@ import type { RescuePlan } from '../../content/rescue';
 import { containsPhrase, pronunciationFor } from '../../content/pronunciation';
 import { PronunciationCoach } from './PronunciationCoach';
 import { tokens as t } from '../../theme/tokens';
-import { StudyAudio } from '../voice/VoiceControls';
 import { SpeechInput } from '../voice/SpeechInput';
 export interface RescueProps { plan: RescuePlan; mode: PedagogicalMode }
 export function LearningRescue({ plan, mode, language, disabled, onUse, onHelp }: RescueProps & { language:'fr-FR'|'en-GB'; disabled:boolean; onUse:(answer:LearnerAnswer)=>void; onHelp:()=>void }) {
@@ -35,12 +34,11 @@ export function LearningRescue({ plan, mode, language, disabled, onUse, onHelp }
       {contextualGuide&&<PronunciationCoach key={`related:${contextualGuide.id}`} related guide={contextualGuide} text={contextualGuide.original} language={language} mode={mode} onHelp={onHelp} />}
       <Button label="Preparar esta respuesta con ayuda" disabled={disabled} onPress={prepare} />
       <Text style={s.note}>Prepara tu borrador; después elegís enviarlo. Podés continuar con ayuda aunque el micrófono no entienda.</Text>
-      <Button variant="text" label={details?'Cerrar práctica y ayudas':'Practicar, construir y ver vocabulario'} onPress={()=>{onHelp();setDetails(!details);}} />
-      {details && <View style={s.section}><Copy>{plan.vocabulary}</Copy>{!guide&&segments.map((part,i)=><View key={`${i}:${part}`} style={s.part}><Text style={s.partText}>{part}</Text><StudyAudio text={part} language={language} /></View>)}{guide&&<Text style={s.note}>Para escuchar por partes y ver los sonidos difíciles, abrí «¿Cómo se pronuncia?».</Text>}</View>}
+      <Button variant="text" label={details?'Cerrar práctica':'Practicar y construir mi respuesta'} onPress={()=>{onHelp();setDetails(!details);}} />
       {details&&<><Button variant="text" label={build?'Cerrar construcción':'Construir mi respuesta'} onPress={()=>{onHelp();setBuild(!build);}} />
       {build && <View style={s.section}><Copy>Agregá los grupos en orden. Podés escuchar cada uno antes.</Copy><View style={s.tokens}>{segments.map((part,i)=><Button key={`${i}:${part}`} variant="secondary" label={i<added?`✓ ${part}`:`Añadir ${part}`} disabled={disabled||i!==added} onPress={()=>{onHelp();setAdded(i+1);}} />)}</View><Text style={s.partText}>{segments.slice(0,added).join(' ')||'Tu respuesta aparecerá aquí.'}</Text><Button label="Usar respuesta construida" disabled={disabled||added!==segments.length} onPress={prepare} /><Button variant="text" label="Volver a construir" onPress={()=>setAdded(0)} /></View>}
       <Button variant="text" label={practice?'Cerrar práctica oral':'Practicar hablando sin enviar'} onPress={()=>{onHelp();setPractice(!practice);}} />
-      {practice && <View style={s.section}><SpeechInput language={language} disabled={disabled} purpose="practice" onUse={text=>{setPracticeText(text);return true;}} /><Button variant="secondary" label="Confirmar: intentaba decir el modelo" disabled={disabled} onPress={()=>setPracticeText(model.text)} />{practiceText&&<View accessibilityLiveRegion="polite"><Copy>Práctica en pantalla: {practiceText}</Copy></View>}<Copy>Confirmar lo que intentabas decir no verifica sonidos ni envía una respuesta educativa.</Copy></View>}
+      {practice && <View style={s.section}><SpeechInput language={language} disabled={disabled} purpose="practice" onUse={text=>{setPracticeText(text);return true;}} /><Button variant="secondary" label="Confirmar: intentaba decir el modelo" disabled={disabled} onPress={()=>setPracticeText(model.text)} />{practiceText.length>0&&<View accessibilityLiveRegion="polite"><Copy>Práctica en pantalla: {practiceText}</Copy></View>}<Copy>Confirmar lo que intentabas decir no verifica sonidos ni envía una respuesta educativa.</Copy></View>}
       {plan.alternatives.length>1&&<><Button variant="text" label={alternatives?'Ocultar otras formas':'Ver otras respuestas válidas'} onPress={()=>{onHelp();setAlternatives(!alternatives);}} />{alternatives&&plan.alternatives.map((alternative,i)=><Button key={`${i}:${alternative.text}`} variant="secondary" label={alternative.text} disabled={disabled} onPress={()=>{onHelp();setIndex(i);setAdded(0);setPracticeText('');}} />)}</>}
       </>}
     </View>}

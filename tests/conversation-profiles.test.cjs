@@ -22,7 +22,9 @@ function route(lesson, variantId, bits = 0) {
 }
 test('v1 semantic content is frozen and new package retains the six identities as v2', () => {
   assert.equal(createHash('sha256').update(JSON.stringify(cafeLessonV1)).digest('hex'), '2c2159ab58ddf12eb7a369c95a695754117d4b73e339e1c9280a66211fbd05f3');
-  assert.equal(cafeLesson.version, 2);
+  // LV-007B: new runs use contextual v3; the six v2 identities stay archived.
+  assert.equal(cafeLesson.version, 3);
+  assert.equal(require('../.test-build/content/cafe').cafeLessonV2.version, 2);
   assert.deepEqual(cafeLesson.variants.map(item => item.id), cafeLessonV1.variants.map(item => item.id));
   assert.equal(new Set(cafeLesson.variants.map(conversationFingerprint)).size, 6);
   assertDistinctConversations(cafeLesson.variants);
@@ -102,7 +104,7 @@ test('plain and wrapped v1 progress resume with identical content and feedback, 
     assert.deepEqual(reloaded, continued);
     assert.equal(reloaded.contentVersion, 1);
     const next = await repo.start(() => 0.8, 30);
-    assert.equal(next.contentVersion, 2);
+    assert.equal(next.contentVersion, 3);
     assert.equal(next.run, progress.run + 1);
   }
 });
@@ -146,13 +148,13 @@ test('all six new profiles and their versioned statistics survive a repository r
     const repository = new MissionRepository(storage, cafeLesson, [cafeLessonV1]); await repository.load();
     const progress = await repository.start(() => (index + 0.5) / 6, 100);
     assert.equal(progress.variantId, cafeLesson.variants[index].id);
-    assert.equal(progress.contentVersion, 2);
+    assert.equal(progress.contentVersion, 3);
     const fresh = new MissionRepository(storage, cafeLesson, [cafeLessonV1]);
     assert.deepEqual(await fresh.load(), progress);
     assert.deepEqual(fresh.getHistory(), repository.getHistory());
     const entry = fresh.getHistory().entries.find(entry => entry.context.category === 'mission-variant');
     assert.equal(entry.context.profileId, conversationFingerprint(cafeLesson.variants[index]));
-    assert.ok(entry.id.includes(':v2:'));
+    assert.ok(entry.id.includes(':v3:'), 'LV-007B: variety history is versioned with the contextual café');
   }
 });
 test('price comprehension accepts the declared amount and rejects the other taught numbers', () => {

@@ -167,6 +167,22 @@ try {
             assert.equal(await evaluate(`document.querySelector('textarea').value`),'Oui, j’ai','coach keeps the typed draft');
             assert.deepEqual(await read(),savedBefore,'consulting pronunciation saves nothing');
           }
+          if(route==='/mission' && exercise.id==='paiement') {
+            // LV-009-LEARN-04: price turn teaches the liaison, lets every option be heard, and shows each help once.
+            const savedBefore=await read();
+            const price=exercise.choices.find(c=>c.correct).label;
+            await hasText({'Trois euros.':'truá zöró','Deux euros.':'dö zöró','Un euro.':'ẽ nöró'}[price]);
+            await button('Practicar y construir mi respuesta'); await button('Construir mi respuesta'); await button('Practicar hablando sin enviar');
+            await button('Escuchar las opciones'); await hasText('no la elige ni indica si es la correcta');
+            for(const option of exercise.choices) await hasText(option.label);
+            await button(`Significado y pronunciación de ${exercise.choices[0].label}`);
+            const players=await evaluate(`[...document.querySelectorAll('[role="button"]')].filter(b=>(b.getAttribute('aria-label')??b.textContent).trim()==='Escuchar el modelo').length`);
+            assert.equal(players,1,'one model player with every help open');
+            await evaluate(`[...document.querySelectorAll('body *')].filter(e=>e.textContent.trim()==='Escuchar o estudiar una opción no la elige ni indica si es la correcta.').at(-1)?.scrollIntoView({block:'start'})`);
+            await capture('cafe-price-options');
+            assert.deepEqual(await read(),savedBefore,'listening to and studying options saves nothing');
+            await button('Cerrar las opciones'); await button('Cerrar práctica');
+          }
           await prepare(lesson.language);
         }
         if(!p.feedback?.correct) {

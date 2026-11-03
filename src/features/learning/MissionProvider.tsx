@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { cafeLesson, cafeLessonV1, cafeLessonForProgress } from '../../content/cafe';
-import { londonLesson, londonLessonV1, londonLessonV2, londonLessonV3, londonLessonForProgress } from '../../content/london';
-import { rendezvousLesson, rendezvousLessonForProgress } from '../../content/rendezvous';
+import { cafeLesson, cafeLessonV1, cafeLessonV2, cafeLessonForProgress } from '../../content/cafe';
+import { londonLesson, londonLessonV1, londonLessonV2, londonLessonV3, londonLessonV4, londonLessonForProgress } from '../../content/london';
+import { rendezvousLesson, rendezvousLessonV1, rendezvousLessonForProgress } from '../../content/rendezvous';
 import { continueMission, submitAnswer } from '../../domain/learning/engine';
 import type { AnswerSupport, LearnerAnswer, MissionProgress } from '../../domain/learning/models';
 import { MissionConflictError, MissionRepository } from '../../storage/missionRepository';
@@ -13,9 +13,10 @@ import { roastLesson, roastLessonV2, roastLessonForProgress } from '../../conten
 import { canRoast } from '../../domain/humor/access';
 import { voiceController } from '../voice/service';
 
-const repository = new MissionRepository(deviceStorage, cafeLesson, [cafeLessonV1]);
-const englishRepository = new MissionRepository(deviceStorage, londonLesson, [londonLessonV1, londonLessonV2, londonLessonV3]);
-const rendezvousRepository = new MissionRepository(deviceStorage, rendezvousLesson);
+// LV-007B: archived versions stay resumable; only new runs use the contextual versions.
+const repository = new MissionRepository(deviceStorage, cafeLesson, [cafeLessonV1, cafeLessonV2]);
+const englishRepository = new MissionRepository(deviceStorage, londonLesson, [londonLessonV1, londonLessonV2, londonLessonV3, londonLessonV4]);
+const rendezvousRepository = new MissionRepository(deviceStorage, rendezvousLesson, [rendezvousLessonV1]);
 const roastRepository = new MissionRepository(deviceStorage, roastLesson, [roastLessonV2], 'roast');
 interface MissionState {
   mode?: 'friendly' | 'roast';

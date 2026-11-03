@@ -15,7 +15,7 @@ export function BeginnerPreparation({ phrase, step, language, saving, onStep, an
   if (answered) return step === 'done' ? <View accessibilityLiveRegion="polite" style={s.panel}><Text style={s.label}>PRÁCTICA GUARDADA</Text><Copy>{phrase.transfer.choices.find(choice => choice.correct)?.explanation}</Copy><Copy>Podés continuar tu historia. Esto no certifica pronunciación ni dominio.</Copy></View> : <View style={s.panel}>
     <Text style={s.label}>OTRA SITUACIÓN · PROBALO</Text><Copy>{phrase.transfer.context}</Copy>
     {phrase.transfer.choices.map(choice => <Button key={choice.text} variant="secondary" label={choice.text} disabled={saving} onPress={() => { setTransferHelp(choice.explanation); if (choice.correct) onStep('done'); }} />)}
-    {transferHelp && <View accessibilityLiveRegion="polite"><Copy>{transferHelp}</Copy></View>}
+    {Boolean(transferHelp) && <View accessibilityLiveRegion="polite"><Copy>{transferHelp}</Copy></View>}
     <Copy>Práctica breve, sin nota ni certificación. Podés continuar la historia cuando quieras.</Copy>
   </View>;
   if (step === 'done' || step === 'respond') return <View style={s.ready}><Copy>Ya podés responder al personaje. El micrófono es opcional.</Copy><Button variant="text" label="Volver a escuchar y practicar" disabled={saving} onPress={() => onStep('listen')} /></View>;

@@ -99,7 +99,9 @@ test('LEARN: archived London v3 replays identically, new v4 completes all existi
   const { londonLessonV1, londonLessonV2, londonLessonV3 } = require('../.test-build/content/london');
   const { MissionRepository } = require('../.test-build/storage/missionRepository');
   assert.equal(londonLessonV3.version, 3);
-  assert.equal(londonLesson.version, 4);
+  // LV-007B: new runs use contextual v5; v4 stays archived and resumable.
+  assert.equal(londonLesson.version, 5);
+  assert.equal(require('../.test-build/content/london').londonLessonV4.version, 4);
   let old = beginMission(londonLessonV3);
   old = submitAnswer(londonLessonV3, old, { kind: 'choice', choiceId: 'hello' });
   assert.equal(londonLessonForProgress(old), londonLessonV3);

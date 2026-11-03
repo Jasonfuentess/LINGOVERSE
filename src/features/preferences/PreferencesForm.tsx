@@ -23,7 +23,7 @@ export function PreferencesForm({ initial, saving, error, onboarding, onSave }: 
         <CharacterPortrait name={coachNames[item.id]} size={56} /><View style={{ flex: 1, gap: 3 }}><Text style={{ color: t.color.ink, fontSize: 18, fontWeight: '700' }}>{coachNames[item.id]}</Text><Text style={{ color: t.color.muted, fontSize: 14, lineHeight: 21 }}>{item.label}</Text></View><Text accessible={false} style={{ color: t.color.teal, fontSize: 22 }}>{coach === item.id ? '●' : '○'}</Text>
       </Pressable>)}
     </View></Card>
-    {error && <Notice message={error} />}
+    {error ? <Notice message={error} /> : null}
     {saved && !error && <View accessibilityLiveRegion="polite"><Copy>Preferencias guardadas en este dispositivo.</Copy></View>}
     <Button label={saving ? 'Guardando…' : onboarding ? 'Entrar como invitado' : 'Guardar preferencias'} disabled={saving} onPress={() => { setSaved(false); void onSave({ learningLanguage: language, coachLocale: coach, onboardingCompleted: true }).then(setSaved); }} />
   </>;

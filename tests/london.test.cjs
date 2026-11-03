@@ -209,7 +209,8 @@ test("market and bus dialogues answer the student's actual question without redu
 });
 
 test('v1 London saved events and incorrect feedback are preserved; fresh runs use v4', async () => {
-  assert.equal(londonLesson.version, 4);
+  assert.equal(londonLesson.version, 5);
+  assert.equal(require('../.test-build/content/london').londonLessonV4.version, 4);
   assert.equal(londonLessonV2.version, 2);
   assert.equal(londonLessonV1.version, 1);
   const variant = londonLessonV1.variants.find(v => v.id === 'riverside-rain');
@@ -229,6 +230,6 @@ test('v1 London saved events and incorrect feedback are preserved; fresh runs us
   await repo.save(oldProgress);
   assert.deepEqual(await new MissionRepository(storage, londonLesson, [londonLessonV1, londonLessonV2]).load(), oldProgress);
   const fresh = await repo.start(() => 0.2);
-  assert.equal(fresh.contentVersion, 4);
+  assert.equal(fresh.contentVersion, 5);
   assert.equal(londonLessonForProgress(fresh), londonLesson);
 });

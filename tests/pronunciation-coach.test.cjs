@@ -75,7 +75,7 @@ test('LEARN03 catalog: typed entries are internally consistent, sourced and carr
   }
   const originals = pronunciationGuides.map(g => `${g.language}:${normalizeAnswer(g.original)}`);
   assert.equal(new Set(originals).size, originals.length, 'one guide per expression and language');
-  assert.equal(pronunciationGuides.length, 35, '11 reviewed LEARN-02 guides + 24 new essential guides');
+  assert.equal(pronunciationGuides.length, 69, '11 reviewed LEARN-02 + 24 LEARN-03 + 34 LV-009-LEARN-04 choice-turn guides');
 });
 
 test('LEARN03 catalog: every guide is attached only to exercises where it is part of a correct answer, in its own language', () => {
@@ -125,8 +125,11 @@ test('LEARN03 lookup: apostrophe variants match, phrases match whole words only,
   assert.ok(!guidesWithin('Merci.', 'fr').some(g => g.id === 'fr.merci'), 'exact expression is not repeated as a related guide');
   const midi = cafeLesson.variants.find(v => v.id === 'midi-samir').exercises.find(e => e.id === 'lieu-cafe');
   const plan = learningRescue('fr', 'cafe', midi);
-  assert.equal(plan.pronunciation, null);
-  assert.equal(plan.usefulGuides[0].id, 'fr.sur-place', 'longest reviewed chunk first');
+  // LV-009-LEARN-04 added a full guide for this model; chunks of the alternatives are still associated and ordered.
+  assert.equal(plan.pronunciation.id, 'fr.oui-sur-place');
+  const ids = plan.usefulGuides.map(g => g.id);
+  assert.ok(ids.includes('fr.sur-place') && ids.includes('fr.a-emporter'), 'chunks of every valid alternative');
+  assert.ok(plan.usefulGuides.every((g, i, all) => i === 0 || all[i - 1].original.length >= g.original.length), 'longest reviewed chunk first');
 });
 
 test('LEARN03 coach UI: starter sees the guide upfront; breakdown plays original units (normal and slow) in the guide locale only', () => {
