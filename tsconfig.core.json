@@ -29,6 +29,10 @@
     "src/storage/browserStorage.ts",
     "src/storage/missionRepository.ts",
     "src/content/rescue.ts",
-    "src/content/pronunciation.ts"
+    "src/content/pronunciation.ts",
+    "src/content/live.ts",
+    "src/content/liveHumor.ts",
+    "src/storage/liveVoiceRepository.ts",
+    "src/storage/livePreferencesRepository.ts"
   ]
 }

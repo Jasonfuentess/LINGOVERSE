@@ -13,7 +13,7 @@ export interface SpeechDriver {
   stop: () => Promise<void>;
   speak: (text: string, voice: DeviceVoice, events: SpeechEvents, rate?: number) => void;
 }
-export interface SpeechRequest { id: string; text: string; language: string; adult?: boolean; rate?: number }
+export interface SpeechRequest { id: string; text: string; language: string; adult?: boolean; rate?: number; /** RML-001: user-chosen voice, used only if it speaks `language`. */ voiceId?: string }
 export interface VoiceContext { scope: string; muted: boolean; adultAllowed: boolean; allowNetworkVoices?: boolean }
 export interface VoiceState { voices: DeviceVoice[]; status: 'idle' | 'loading' | 'starting' | 'speaking' | 'error'; activeId: string | null; muted: boolean; error: string | null; allowNetworkVoices: boolean }
 type Schedule = (callback: () => void, milliseconds: number) => () => void;
@@ -60,16 +60,34 @@ export class VoiceController {
       if (discovery === this.discovery) this.publish({ voices: [], status: 'error', error: 'No pudimos consultar las voces. Podés seguir leyendo y reintentar.' });
     }
   }
-  async play(request: SpeechRequest) {
-    if (this.context.muted || (request.adult && !this.context.adultAllowed)) return;
+  /** A preferred voice is honoured only if it is available and speaks the requested language; never a silent cross-language swap. */
+  private voiceFor(request: SpeechRequest) {
+    if (request.voiceId) {
+      const family = tag(request.language).split('-')[0];
+      const preferred = this.state.voices.find(voice => voice.identifier === request.voiceId && (voice.local !== false || this.context.allowNetworkVoices) && tag(voice.language).split('-')[0] === family);
+      if (preferred) return { voice: preferred, regionalFallback: tag(preferred.language) !== tag(request.language) };
+    }
+    return selectVoice(this.state.voices, request.language, this.context.allowNetworkVoices);
+  }
+  async play(request: SpeechRequest) { return this.playSequence(request.id, [request]); }
+  /**
+   * RML-001: one utterance made of consecutive segments (e.g. Spanish coach comment, then a French model
+   * in a French voice). Segments share one generation token, so stop/mute/revocation/navigation cancels the
+   * whole sequence and a late callback can never start the next segment or overlap a new request.
+   */
+  async playSequence(id: string, segments: Omit<SpeechRequest, 'id'>[]) {
+    const requests = segments.map(segment => ({ ...segment, id }));
+    const blocked = () => this.context.muted || requests.some(request => request.adult && !this.context.adultAllowed);
+    if (!requests.length || blocked()) return;
     const token = ++this.generation;
     this.cancelTimer?.();
-    this.publish({ status: 'starting', activeId: request.id, error: null });
+    this.publish({ status: 'starting', activeId: id, error: null });
     const stopped = await this.halt();
-    if (token !== this.generation || this.context.muted || (request.adult && !this.context.adultAllowed)) return;
-    const selection = selectVoice(this.state.voices, request.language, this.context.allowNetworkVoices);
-    if (!stopped || !selection || !request.text.trim() || request.text.length > 2000 || (request.rate !== undefined && (!Number.isFinite(request.rate) || request.rate < 0.5 || request.rate > 1.2))) {
-      this.publish({ status: 'error', activeId: null, error: !stopped ? 'No pudimos detener la voz anterior. Reintentá.' : !selection ? 'No hay una voz compatible disponible. El texto sigue disponible.' : 'Este texto no se puede reproducir.' });
+    if (token !== this.generation || blocked()) return;
+    const selections = requests.map(request => this.voiceFor(request));
+    const invalid = requests.some(request => !request.text.trim() || request.text.length > 2000 || (request.rate !== undefined && (!Number.isFinite(request.rate) || request.rate < 0.5 || request.rate > 1.2)));
+    if (!stopped || selections.some(selection => !selection) || invalid || requests.length > 12) {
+      this.publish({ status: 'error', activeId: null, error: !stopped ? 'No pudimos detener la voz anterior. Reintentá.' : selections.some(selection => !selection) ? 'No hay una voz compatible disponible. El texto sigue disponible.' : 'Este texto no se puede reproducir.' });
       return;
     }
     const finish = (error = false) => {
@@ -79,17 +97,23 @@ export class VoiceController {
       this.publish({ status: error ? 'error' : 'idle', activeId: null, error: error ? 'La voz no respondió o no pudo reproducirse. Revisá el sonido del dispositivo y reintentá.' : null });
       if (error) void this.halt();
     };
-    this.cancelTimer = this.schedule(() => finish(true), 8000);
-    try {
-      this.driver.speak(request.text, selection.voice, {
-        onStart: () => {
-          if (token !== this.generation) return;
-          this.cancelTimer?.();
-          this.cancelTimer = this.schedule(() => finish(true), 120000);
-          this.publish({ status: 'speaking' });
-        },
-        onDone: () => finish(), onStopped: () => finish(), onError: () => finish(true),
-      }, request.rate ?? 0.9);
-    } catch { finish(true); }
+    const speak = (index: number) => {
+      const request = requests[index]!;
+      this.cancelTimer?.();
+      this.cancelTimer = this.schedule(() => finish(true), 8000);
+      try {
+        this.driver.speak(request.text, selections[index]!.voice, {
+          onStart: () => {
+            if (token !== this.generation) return;
+            this.cancelTimer?.();
+            this.cancelTimer = this.schedule(() => finish(true), 120000);
+            this.publish({ status: 'speaking' });
+          },
+          onDone: () => { if (token !== this.generation) return; if (index + 1 < requests.length) speak(index + 1); else finish(); },
+          onStopped: () => finish(), onError: () => finish(true),
+        }, request.rate ?? 0.9);
+      } catch { finish(true); }
+    };
+    speak(0);
   }
 }

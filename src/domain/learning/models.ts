@@ -14,7 +14,7 @@ export interface ChoiceOption {
 
 // ——— LV-007B contextual conversation contracts (all optional; legacy content is unaffected) ———
 /** How a reply was understood. Only `valid` and `valid-minor` advance the story. */
-export type ResponseOutcome = 'valid' | 'valid-minor' | 'ambiguous' | 'incorrect' | 'unrecognized' | 'off-context';
+export type ResponseOutcome = 'valid' | 'valid-minor' | 'understood' | 'ambiguous' | 'incorrect' | 'unrecognized' | 'off-context';
 export type FactValues = Record<string, string>;
 export type FactStatus = 'confirmed' | 'ambiguous';
 export interface FactCondition { fact: string; value: string; status?: FactStatus }
@@ -47,6 +47,31 @@ export interface MinorForm {
 export interface Clarification { inputs: string[]; reply: string; explanation: string; spokenExplanation?: string; facts?: FactValues }
 /** A reviewed, understandable reply that does not fit this moment of the story. */
 export interface OffContext { inputs: string[]; explanation: string; spokenExplanation?: string }
+/**
+ * RML-002 reviewed understanding rule (opt-in, contextual exercises only). Deterministic: every group in
+ * `all` must contain one of its phrases (whole words, accents and case ignored), none of `none` may
+ * appear, and every word of the reply must belong to the turn's reviewed vocabulary. The free text is
+ * never stored: `canonical` is retained instead and must replay to this same rule.
+ * - `target`: demonstrates the practised objective (outcome `valid`).
+ * - `different`: coherent, the story continues, but it is not the practised form (outcome `understood`).
+ * - `clarify`: understood only partly; the character asks back (outcome `ambiguous`).
+ */
+export interface UnderstandingRule {
+  id: string;
+  all: string[][];
+  none?: string[];
+  canonical: string;
+  fit: 'target' | 'different' | 'clarify';
+  explanation: string;
+  /** Routes like this intent (reply, next, facts, completes) unless overridden here. */
+  intent?: string;
+  facts?: FactValues;
+  reply?: string;
+  /** The practised form taught after a `different` reply. */
+  better?: string;
+}
+/** A reviewed real error recognised inside a longer reply; it is diagnosed exactly like `rule` (a writtenRules input). */
+export interface ErrorPattern { all: string[][]; none?: string[]; rule: string }
 /** Prompt shown instead of the default when every condition holds in conversation memory. */
 export interface ContextualPrompt { when: FactCondition[]; prompt: string; promptTranslation: string }
 
@@ -84,6 +109,11 @@ export interface TextExercise extends ExerciseBase {
   offContext?: OffContext[];
   /** Facts confirmed by any accepted reply that is not part of a more specific intent. */
   acceptedFacts?: FactValues;
+  /** RML-002: reviewed understanding of natural variants, checked after every exact list. */
+  understanding?: UnderstandingRule[];
+  errorPatterns?: ErrorPattern[];
+  /** Extra reviewed words (fillers, greetings) allowed in understood replies besides the turn's own phrases. */
+  lexicon?: string[];
 }
 export type Exercise = ChoiceExercise | TextExercise;
 export interface LessonVariant { id: string; title: string; start: string; exercises: Exercise[] }
@@ -113,9 +143,13 @@ export interface Evaluation {
   factStatus?: FactStatus;
   completes?: string[];
   minorIssue?: MinorForm['issue'];
+  /** RML-002: id of the understanding rule that interpreted the reply. */
+  understood?: string;
 }
 export type AnswerSupport = 'assisted' | 'independent';
-export type LearningEvent = { type: 'answer'; nodeId: string; answer: LearnerAnswer; support?: AnswerSupport } | { type: 'continue' };
+/** RML-002: how the reply was produced. Spoken means dictated and reviewed; it never proves pronunciation. */
+export type AnswerChannel = 'spoken' | 'written';
+export type LearningEvent = { type: 'answer'; nodeId: string; answer: LearnerAnswer; support?: AnswerSupport; channel?: AnswerChannel } | { type: 'continue' };
 export interface MissionProgress {
   version: 1;
   lessonId: string;

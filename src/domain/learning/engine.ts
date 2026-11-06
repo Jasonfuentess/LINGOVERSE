@@ -1,4 +1,4 @@
-import type { AnswerSupport, Evaluation, Exercise, LearnerAnswer, Lesson, MissionProgress, VariantSelector } from './models';
+import type { AnswerChannel, AnswerSupport, Evaluation, Exercise, LearnerAnswer, Lesson, MissionProgress, VariantSelector } from './models';
 import { validateLesson } from './validation';
 import { validateWritten } from './written';
 import { interpretAnswer } from './interpretation';
@@ -57,8 +57,9 @@ export function evaluateAnswer(exercise: Exercise, answer: LearnerAnswer): Evalu
   } else explanation = 'El formato de respuesta no corresponde a este ejercicio.';
   return { correct, explanation, correction: exercise.correction, reply, next, ...(spokenExplanation ? { spokenExplanation } : {}) };
 }
-export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: LearnerAnswer, support?: AnswerSupport): MissionProgress {
+export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: LearnerAnswer, support?: AnswerSupport, channel?: AnswerChannel): MissionProgress {
   if (support !== undefined && support !== 'assisted' && support !== 'independent') throw Error('Evidencia de ayuda inválida');
+  if (channel !== undefined && channel !== 'spoken' && channel !== 'written') throw Error('Canal de respuesta inválido');
   const exercise = currentExercise(lesson, state);
   if (state.feedback?.correct) throw Error('Leé la respuesta y continuá antes de responder otra vez');
   if (state.events.length >= 1024) throw Error('Se alcanzó el límite de intentos de este recorrido. Reiniciá para practicar de nuevo.');
@@ -66,7 +67,7 @@ export function submitAnswer(lesson: Lesson, state: MissionProgress, answer: Lea
   // Only editorial phrasings are retained; unrecognised free text is stored as an empty marker.
   if (exercise.conversation === 'contextual-v1') answer = interpretAnswer(exercise, answer).retained;
   else if (exercise.kind === 'text' && exercise.writtenRules && answer.kind === 'text') answer ={ kind: 'text', text: validateWritten(exercise, answer.text).retained };
-  return { ...state, feedback, events: [...state.events, { type: 'answer', nodeId: exercise.id, answer, ...(support ? { support } : {}) }] };
+  return { ...state, feedback, events: [...state.events, { type: 'answer', nodeId: exercise.id, answer, ...(support ? { support } : {}), ...(channel ? { channel } : {}) }] };
 }
 export function continueMission(lesson: Lesson, state: MissionProgress): MissionProgress {
   const exercise = currentExercise(lesson, state);
@@ -91,7 +92,7 @@ export function restoreProgress(lesson: Lesson, value: unknown): MissionProgress
     const event = value as Record<string, unknown>;
     if (event.type === 'answer') {
       if (event.nodeId !== state.nodeId) throw Error('Historial fuera de orden');
-      state = submitAnswer(lesson, state, event.answer as LearnerAnswer, event.support as AnswerSupport | undefined);
+      state = submitAnswer(lesson, state, event.answer as LearnerAnswer, event.support as AnswerSupport | undefined, event.channel as AnswerChannel | undefined);
     } else if (event.type === 'continue') state = continueMission(lesson, state);
     else throw Error('Evento desconocido');
   }

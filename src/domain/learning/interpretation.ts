@@ -1,10 +1,15 @@
-import type { ChoiceExercise, Evaluation, Exercise, LearnerAnswer, TextExercise, TextIntent } from './models';
+import type { ChoiceExercise, Evaluation, Exercise, LearnerAnswer, TextExercise, TextIntent, UnderstandingRule } from './models';
 import { normalizeWritten, validateWritten } from './written';
+import { matchErrorPattern, matchUnderstanding } from './understanding';
 
 /**
- * LV-007B contextual interpretation. Deterministic and editorial: every recognised reply is an exact,
- * reviewed phrasing (after punctuation/case/apostrophe normalisation). No keyword matching, no fuzzy
- * similarity and no claim of general language understanding. Anything else is `unrecognized`.
+ * LV-007B contextual interpretation. Deterministic and editorial: exact reviewed phrasings first (after
+ * punctuation/case/apostrophe normalisation). RML-002 adds, only for exercises that opt in, reviewed
+ * understanding rules over a closed turn vocabulary (see understanding.ts): still no fuzzy similarity and
+ * no claim of general language understanding. Anything else is `unrecognized`.
+ *
+ * Replay invariant: the evaluation depends only on the retained answer. Rules retain their canonical
+ * phrasing (validated to replay to the same rule) and error patterns retain the reviewed error.
  *
  * Only `valid` and `valid-minor` set `correct` and a `next` turn. Ambiguous and off-context replies use
  * `writtenIssue: 'unknown'` so they never count as confirmed language errors or trigger Roast.
@@ -63,10 +68,30 @@ function interpretText(exercise: TextExercise, input: string): Interpretation {
     const matched = off.inputs.find(value => same(value, input))!;
     return { retained: keep(matched), evaluation: { ...base, correct: false, outcome: 'off-context', writtenIssue: 'unknown', explanation: off.explanation, ...(off.spokenExplanation ? { spokenExplanation: off.spokenExplanation } : {}), reply: '', next: null } };
   }
-  // Known language errors keep the existing editorial diagnosis; anything else stays unrecognised.
   const written = validateWritten(exercise, input);
+  // RML-002: a reviewed error inside a longer reply is diagnosed exactly like the reviewed error itself.
+  if (written.issue === 'unknown') {
+    const pattern = matchErrorPattern(exercise, input);
+    if (pattern && pattern.rule !== input) return interpretText(exercise, pattern.rule);
+    const rule = matchUnderstanding(exercise, input);
+    if (rule) return understood(exercise, rule);
+  }
+  // Known language errors keep the existing editorial diagnosis; anything else stays unrecognised.
   const known = written.issue !== 'unknown';
   return { retained: keep(written.retained), evaluation: { ...base, correct: false, outcome: known ? 'incorrect' : 'unrecognized', writtenIssue: written.issue, explanation: written.explanation, ...(written.spokenExplanation ? { spokenExplanation: written.spokenExplanation } : {}), reply: '', next: null } };
+}
+
+function understood(exercise: TextExercise, rule: UnderstandingRule): Interpretation {
+  const retained: LearnerAnswer = { kind: 'text', text: rule.canonical };
+  const intent = rule.intent ? exercise.intents?.find(item => item.id === rule.intent) : undefined;
+  if (rule.fit === 'clarify') {
+    return { retained, evaluation: { correct: false, outcome: 'ambiguous', writtenIssue: 'unknown', understood: rule.id, explanation: rule.explanation, correction: exercise.correction, reply: rule.reply ?? '', next: null,
+      ...(rule.facts && Object.keys(rule.facts).length ? { facts: { ...rule.facts }, factStatus: 'ambiguous' as const } : {}) } };
+  }
+  const values = rule.facts ?? intent?.facts ?? exercise.acceptedFacts;
+  return { retained, evaluation: { correct: true, outcome: rule.fit === 'target' ? 'valid' : 'understood', understood: rule.id, explanation: rule.explanation, correction: rule.better ?? exercise.correction,
+    ...routed(exercise, intent), ...(rule.reply ? { reply: rule.reply } : {}),
+    ...(values && Object.keys(values).length ? { facts: { ...values }, factStatus: 'confirmed' as const } : {}) } };
 }
 
 export function interpretAnswer(exercise: Exercise, answer: LearnerAnswer): Interpretation {

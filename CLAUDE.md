@@ -281,3 +281,20 @@ Claude Code MAY:
 Leave all changes uncommitted for manual review.
 
 Do not suggest or execute Git commands unless explicitly requested by the project owner.
+
+
+## Flagship experience — Roast Me Live
+
+Roast Me Live is LingoVerse's primary differentiating experience.
+
+- Spoken language learning with contextual, spontaneous-feeling humor.
+- Four regional coaches: El Salvador, Mexico, Colombia and Argentina.
+- Male speaking voices are preferred for all four coaches.
+- Adult opt-in humor may include strong profanity, sarcasm, double entendres, albures and internationally recognizable memes.
+- Regional identity must feel natural, never exaggerated or stereotyped.
+- Salvadoran delivery should be fluid and energetic, without artificial dramatic pauses.
+- Laughter must sound convincing; never make TTS read literal "JAJAJA".
+- Humor must be selective, contextual and non-repetitive.
+- Every interaction must preserve genuine educational value.
+- No mandatory paid APIs.
+- Git operations remain exclusively under the project owner's control.

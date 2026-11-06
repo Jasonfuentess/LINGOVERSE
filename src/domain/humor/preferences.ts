@@ -16,10 +16,17 @@ export function decodeHumorPreferences(raw: string): HumorPreferences {
     consent = { version: 1, adultConfirmed: true, explicitlyAgreed: true, grantedAt: c.grantedAt as number };
   }
   if (adult.enabled && !consent) throw Error('Humor adulto requiere consentimiento');
-  return { version: 1, enabled: p.enabled, intensity: p.intensity as HumorPreferences['intensity'], ...(p.adventureRoast !== undefined ? { adventureRoast: p.adventureRoast as boolean } : {}), adult: { enabled: adult.enabled, consent } };
+  let live: HumorPreferences['live'];
+  if (p.live !== undefined) {
+    const l = p.live as Record<string, unknown>;
+    if (!l || typeof l !== 'object' || typeof l.intensity !== 'string' || !['picante', 'sin-pena', 'sin-misericordia'].includes(l.intensity) || typeof l.doubleMeaning !== 'boolean') throw Error('Configuración de Roast Me Live inválida');
+    if (l.doubleMeaning && !(adult.enabled && consent)) throw Error('El doble sentido requiere consentimiento adulto');
+    live = { intensity: l.intensity as NonNullable<HumorPreferences['live']>['intensity'], doubleMeaning: l.doubleMeaning };
+  }
+  return { version: 1, enabled: p.enabled, intensity: p.intensity as HumorPreferences['intensity'], ...(p.adventureRoast !== undefined ? { adventureRoast: p.adventureRoast as boolean } : {}), ...(live ? { live } : {}), adult: { enabled: adult.enabled, consent } };
 }
 export function grantAdultConsent(previous: HumorPreferences, confirmation: { adultConfirmed?: boolean; explicitlyAgreed?: boolean }, at: number): HumorPreferences {
   if (confirmation.adultConfirmed !== true || confirmation.explicitlyAgreed !== true || !Number.isSafeInteger(at) || at < 0) throw Error('Se necesitan mayoría de edad y consentimiento explícitos');
   return decodeHumorPreferences(JSON.stringify({ ...previous, adult: { enabled: true, consent: { version: 1, adultConfirmed: true, explicitlyAgreed: true, grantedAt: at } } }));
 }
-export function disableAdult(previous: HumorPreferences): HumorPreferences { return { ...previous, ...(previous.adventureRoast !== undefined ? { adventureRoast: false } : {}), adult: { enabled: false, consent: null } }; }
+export function disableAdult(previous: HumorPreferences): HumorPreferences { return { ...previous, ...(previous.adventureRoast !== undefined ? { adventureRoast: false } : {}), ...(previous.live ? { live: { intensity: 'picante' as const, doubleMeaning: false } } : {}), adult: { enabled: false, consent: null } }; }

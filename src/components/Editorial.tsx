@@ -21,6 +21,16 @@ export function RoastInvitation() {
     <View style={e.coachRow}>{['Luz', 'Toño', 'Vale', 'Romi'].map(name => <CharacterPortrait key={name} name={name} size={42} />)}<Text style={e.roastCopy}>Conocer Roast Me →</Text></View>
   </Pressable>;
 }
+/** RML-001/002: the single flagship entry on Home (it replaced the separate Roast Me card there). Adult humor stays opt-in inside the screen; classic Roast Me remains reachable from Explore and from Live's humor settings. */
+export function LiveInvitation() {
+  const router = useRouter();
+  return <Pressable accessibilityRole="button" accessibilityLabel="Abrir Roast Me Live: conversación hablada con tu entrenador" onPress={() => router.push('/live')} style={({ pressed }) => [e.roast, pressed && { opacity: 0.85 }]}>
+    <View style={e.roastTop}><Text style={e.roastTag}>ROAST ME LIVE · TU ENTRENADOR</Text><Text accessible={false} style={e.arrow}>↗</Text></View>
+    <Text style={e.roastTitle}>{'Hablá. Equivocate.\nReíte. Aprendé.'}</Text>
+    <Text style={e.roastCopy}>Conversaciones por turnos, con ayuda o con libertad, hablando o escribiendo. Tu entrenador te entiende, te corrige y, solo si lo elegís, te roastea con todo.</Text>
+    <View style={e.coachRow}>{['Luz', 'Toño', 'Vale', 'Romi'].map(name => <CharacterPortrait key={name} name={name} size={42} />)}<Text style={e.roastCopy}>Empezar a conversar →</Text></View>
+  </Pressable>;
+}
 export function DestinationLinks() {
   const router = useRouter();
   return <View style={e.destinations}>{([{ language: 'fr', title: 'París', caption: 'FRANCÉS A1 · 2 AVENTURAS', path: '/rendezvous' }, { language: 'en', title: 'Londres', caption: 'INGLÉS A1 · 1 AVENTURA', path: '/london' }] as const).map(city => <Pressable key={city.title} accessibilityRole="button" accessibilityLabel={`Explorar ${city.title}: ${city.caption}`} onPress={() => router.push(city.path)} style={({ pressed }) => [e.destination, pressed && { opacity: 0.8 }]}>

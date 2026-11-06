@@ -1,4 +1,5 @@
-import type { Exercise, FactValues, Lesson } from './models';
+import type { Exercise, FactValues, Lesson, TextExercise } from './models';
+import { interpretAnswer } from './interpretation';
 
 interface Transition { next: string | null; facts?: FactValues; completes?: string[] }
 /** All ways a correct reply can move the story forward (deduplicated). */
@@ -6,7 +7,13 @@ export function transitions(exercise: Exercise): Transition[] {
   const all: Transition[] = exercise.kind === 'choice'
     ? exercise.choices.filter(option => option.correct).map(option => ({ next: option.next, ...(option.facts ? { facts: option.facts } : {}) }))
     : [{ next: exercise.next, ...(exercise.acceptedFacts ? { facts: exercise.acceptedFacts } : {}) },
-      ...(exercise.intents ?? []).map(intent => ({ next: intent.next !== undefined ? intent.next : exercise.next, ...(intent.facts ? { facts: intent.facts } : {}), ...(intent.completes ? { completes: intent.completes } : {}) }))];
+      ...(exercise.intents ?? []).map(intent => ({ next: intent.next !== undefined ? intent.next : exercise.next, ...(intent.facts ? { facts: intent.facts } : {}), ...(intent.completes ? { completes: intent.completes } : {}) })),
+      // RML-002: understood replies route like their intent and may confirm their own facts.
+      ...(exercise.understanding ?? []).filter(rule => rule.fit !== 'clarify').map(rule => {
+        const intent = exercise.intents?.find(item => item.id === rule.intent);
+        const facts = rule.facts ?? intent?.facts ?? exercise.acceptedFacts;
+        return { next: intent && intent.next !== undefined ? intent.next : exercise.next, ...(facts ? { facts } : {}), ...(intent?.completes ? { completes: intent.completes } : {}) };
+      })];
   const seen = new Map<string, Transition>();
   for (const item of all) seen.set(JSON.stringify([item.next, Object.keys(item.facts ?? {}).sort(), item.completes ?? []]), item);
   return [...seen.values()];
@@ -65,6 +72,39 @@ function validateContextual(exercise: Record<string, unknown>, objectives: strin
     const off = record(raw); list(off.inputs); off.inputs.forEach(input => claim(input, 'off-context')); text(off.explanation);
   }
   for (const raw of (exercise.writtenRules as unknown[] | undefined) ?? []) claim(record(raw).input, 'rule');
+  validateUnderstanding(exercise, intentIds);
+}
+
+const phrases = (value: unknown) => { list(value); value.forEach(text); };
+/** RML-002: rules are well formed, and every canonical phrasing and error pattern replays exactly. */
+function validateUnderstanding(exercise: Record<string, unknown>, intentIds: Set<string>) {
+  if (exercise.lexicon !== undefined) phrases(exercise.lexicon);
+  const rules = (exercise.understanding as unknown[] | undefined) ?? [];
+  const patterns = (exercise.errorPatterns as unknown[] | undefined) ?? [];
+  if (rules.length > 100 || patterns.length > 100) throw Error('Demasiadas reglas de comprensión');
+  const ids = new Set<string>();
+  for (const raw of rules) {
+    const rule = record(raw); identifier(rule.id); text(rule.canonical); text(rule.explanation); list(rule.all);
+    if (ids.has(rule.id)) throw Error(`Regla de comprensión duplicada: ${rule.id}`);
+    ids.add(rule.id);
+    rule.all.forEach(phrases); if (rule.none !== undefined) phrases(rule.none);
+    if (!['target', 'different', 'clarify'].includes(String(rule.fit))) throw Error('Ajuste de regla desconocido');
+    if (rule.intent !== undefined && !intentIds.has(rule.intent as string)) throw Error(`Regla con intención desconocida: ${rule.id}`);
+    facts(rule.facts);
+    if (rule.reply !== undefined) text(rule.reply);
+    if (rule.better !== undefined) text(rule.better);
+    if (rule.fit === 'clarify' && rule.reply === undefined) throw Error(`Una regla de aclaración necesita la repregunta: ${rule.id}`);
+    if (rule.fit === 'different' && rule.better === undefined) throw Error(`Una respuesta distinta necesita la forma practicada: ${rule.id}`);
+    const replay = interpretAnswer(exercise as unknown as TextExercise, { kind: 'text', text: rule.canonical as string }).evaluation;
+    if (replay.understood !== rule.id) throw Error(`La forma canónica no vuelve a su regla: ${rule.id}`);
+  }
+  const rules2 = new Set(((exercise.writtenRules as { input: string }[] | undefined) ?? []).map(item => item.input));
+  for (const raw of patterns) {
+    const pattern = record(raw); list(pattern.all); pattern.all.forEach(phrases); if (pattern.none !== undefined) phrases(pattern.none);
+    if (!rules2.has(pattern.rule as string)) throw Error('Patrón de error sin regla escrita revisada');
+    const replay = interpretAnswer(exercise as unknown as TextExercise, { kind: 'text', text: pattern.rule as string }).evaluation;
+    if (replay.outcome !== 'incorrect') throw Error(`El error revisado no se diagnostica: ${String(pattern.rule)}`);
+  }
 }
 
 function record(value: unknown): Record<string, unknown> {

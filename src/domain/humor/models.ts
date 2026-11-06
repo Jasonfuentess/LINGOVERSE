@@ -5,7 +5,10 @@ export type HumorMode = 'friendly' | 'adult' | 'roast' | 'latam-mom';
 export type HumorIntensity = 'gentle' | 'playful';
 export interface Coach { id: string; locale: CoachLocale; name: string; personality: string; introduction: string }
 export interface AdultConsent { version: 1; adultConfirmed: true; explicitlyAgreed: true; grantedAt: number }
-export interface HumorPreferences { version: 1; enabled: boolean; intensity: HumorIntensity; adventureRoast?: boolean; adult: { enabled: boolean; consent: AdultConsent | null } }
+/** RML-001 Roast Me Live: adult tiers (only with valid consent) and explicit double-meaning opt-in. */
+export type LiveIntensity = 'picante' | 'sin-pena' | 'sin-misericordia';
+export interface LiveHumorSettings { intensity: LiveIntensity; doubleMeaning: boolean }
+export interface HumorPreferences { version: 1; enabled: boolean; intensity: HumorIntensity; adventureRoast?: boolean; live?: LiveHumorSettings; adult: { enabled: boolean; consent: AdultConsent | null } }
 export interface HumorContext {
   answerKind?: 'text' | 'choice';
   referenceId?: string;

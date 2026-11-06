@@ -1,6 +1,59 @@
+# RML-002 — Learning Modes, Natural Conversation & Comedy Overhaul (03-nov-2026)
+
+**Estado:** implementado y verificado técnicamente. **La mejora editorial del humor NO está aprobada:** depende de que el usuario apruebe conversaciones reales. Sin cambios de TTS. Sin operaciones Git.
+
+**Línea base:** RML-001 con 242/242 (verificado de nuevo antes de empezar).
+
+**Implementado:**
+- Modalidad **Con ayuda / Con libertad** y respuesta **Hablando / Escribiendo**, guardadas aparte (`lingoverse.live-preferences.v1`).
+- Comprensión de respuestas naturales: reglas revisadas y deterministas por turno, con vocabulario cerrado, polaridad, cantidades, lugares y errores dentro de frases largas. No hay IA ni similitud.
+- Resultado nuevo `understood`: la escena sigue y se enseña la forma practicada, sin acreditarla como dominio.
+- Canal `spoken`/`written` en el evento: lo escrito no cuenta como práctica oral, y nunca se culpa al micrófono de una respuesta tecleada.
+- **Reiniciar práctica** con confirmación: misma escena desde el primer turno, o vuelta a la selección de modalidad.
+- Inicio con un solo acceso (Roast Me Live). Roast Me clásico sigue en Explorar y en los ajustes de humor.
+- Humor reescrito: 448 líneas (112 por entrenador). Incluye reacciones por error y nivel, humor situacional, callbacks, albures contextuales y control de frecuencia, que reemplaza la prohibición absoluta.
+- Contenido Live en versión 2: una sesión guardada de la versión 1 no se reanuda, y la pantalla lo dice.
+
+**Archivos:**
+- Nuevos: `src/domain/learning/understanding.ts`, `src/storage/livePreferencesRepository.ts`, `tests/roast-live-modes.test.cjs`, `tests/live-screen-harness.cjs`, `docs/RML-002-LIVE-MODES.md`, `tasks/RML-002.md`.
+- Modificados: `src/domain/learning/{models,engine,interpretation,validation}.ts`, `src/content/{live,liveHumor}.ts`, `src/domain/humor/live.ts`, `src/domain/live/session.ts`, `src/features/live/LiveScreen.tsx`, `app/index.tsx`, `src/components/Editorial.tsx`, `tsconfig.core.json`, `tests/roast-live.test.cjs`, `scripts/check-live.mjs`.
+
+**Verificación:**
+- 264/264 (242 + 22 nuevas); 3 pruebas de RML-001 actualizadas por cambios pedidos, documentados en el archivo.
+- Ambos typechecks, lint y export web.
+- 6/6 mutaciones detectadas.
+- Chrome: `check-live` PASS en las 3 escenas francesas, más `check-premium` ×3 y `check-conversation` PASS.
+- No se iniciaron ni cerraron servidores.
+
+Detalle y QA manual: [RML-002-LIVE-MODES.md](RML-002-LIVE-MODES.md).
+
+# RML-001 — Roast Me Live: Conversational Humor & Voice Foundation (03-nov-2026)
+
+**Estado:** implementado; pruebas y recorridos en Chrome real headless aprobados. **La aprobación de naturalidad de voz y humor depende de la QA auditiva y editorial del usuario** (pendiente), igual que el micrófono físico y Android/iOS/Safari.
+
+**Línea base verificada antes de empezar:** 226/226. El trabajo previo está en el commit `a002ca3` del usuario. Sin operaciones Git.
+
+**Implementado:**
+- Ruta `/live` y acceso destacado en Inicio.
+- 6 escenas FR/EN sobre los contratos LV-007B.
+- Capa de humor Live: tipo de respuesta + línea contextual, variedad reproducible, sin repetir en la sesión.
+- 157 líneas editoriales distintas para Luz, Toño, Vale y Romi, en 4 niveles (limpio, picante, sin pena, sin misericordia) más doble sentido opcional.
+- Conversación reconstruida desde los eventos: revocar limpia el pasado y el texto libre no se guarda.
+- `VoiceController.playSequence` (sin superposición; cancelación total al detener, navegar o revocar) y `voiceId` del mismo idioma.
+- Selección de voz por región y «masculina probable» por nombre, con prueba y elección persistida.
+- Preferencias `live` opcionales y retrocompatibles en el humor; revocar las reinicia.
+
+**Archivos:**
+- Nuevos: `app/live.tsx`, `src/features/live/LiveScreen.tsx`, `src/content/{live,liveHumor}.ts`, `src/domain/humor/live.ts`, `src/domain/live/session.ts`, `src/domain/voice/coachVoices.ts`, `src/storage/liveVoiceRepository.ts`, `tests/roast-live.test.cjs`, `scripts/check-live.mjs`, `docs/RML-001-ROAST-ME-LIVE.md`, `tasks/RML-001.md`.
+- Modificados: `src/domain/voice/playback.ts`, `src/domain/humor/{models,preferences}.ts`, `src/components/Editorial.tsx`, `app/index.tsx`, `tsconfig.core.json`.
+
+**Verificación:** 242/242 (226 + 16), ambos typechecks, lint, export web; Chrome: `check-premium` ×3, `check-conversation` y `check-live` PASS. Logs `rml-*.log`. No se iniciaron ni cerraron servidores de desarrollo.
+
+**Limitaciones principales:** sin risa audible (solo visual); acento y género dependen de las voces del dispositivo (sin dato de género en la plataforma); las explicaciones no se leen en voz alta; la comprensión se limita a frases revisadas; el humor regional requiere revisión de hablantes nativos. Detalle y QA manual: [RML-001-ROAST-ME-LIVE.md](RML-001-ROAST-ME-LIVE.md).
+
 # LV-009-LEARN-04 — Lesson Practice & Pronunciation Coverage (02-nov-2026)
 
-**Estado:** implementado; pruebas y Chrome real headless aprobados. **Pendiente:** escucha humana, micrófono físico y revisión docente de las 34 guías nuevas.
+**Estado: APROBADA.** Validación manual 9/9 reportada por el usuario (no ejecutada por Claude); la guía archivada tiene 9 pasos. Sigue pendiente la revisión docente de las 34 guías nuevas.
 
 **Problemas encontrados:**
 - `LearningRescue` repetía todo el bloque de audio del modelo y el vocabulario al abrir «Practicar, construir y ver vocabulario» (origen confirmado).
